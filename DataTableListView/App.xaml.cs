@@ -13,17 +13,17 @@
 // </summary>
 //-----------------------------------------------------------------------
 
-using System.Collections;
-using System.Diagnostics;
-using System.Globalization;
-using System.IO;
-using System.Text;
-using System.Windows;
-using System.Windows.Markup;
-using System.Windows.Threading;
-
 namespace DataTableListView
 {
+    using System.Collections;
+    using System.Diagnostics;
+    using System.Globalization;
+    using System.IO;
+    using System.Text;
+    using System.Windows;
+    using System.Windows.Markup;
+    using System.Windows.Threading;
+
     /// <summary>
     /// Interaction logic for App.xaml
     /// </summary>
@@ -48,6 +48,9 @@ namespace DataTableListView
                 /* Synchronisieren einer Textenigabe mit dem primären Windows (wegen Validierung von Eingaben)*/
                 FrameworkCompatibilityPreferences.KeepTextBoxDisplaySynchronizedWithTextProperty = false;
 
+                string currentDirectory = AppDomain.CurrentDomain.BaseDirectory;
+                DatabasePath = Path.Combine(new DirectoryInfo(currentDirectory).Parent.Parent.Parent.FullName, "DemoData", "DemoData.db3");
+
                 /* Alle nicht explicit abgefangene Exception spätesten hier abfangen und anzeigen */
                 this.DispatcherUnhandledException += this.OnDispatcherUnhandledException;
             }
@@ -60,6 +63,8 @@ namespace DataTableListView
                 ApplicationExit();
             }
         }
+
+        public static string DatabasePath { get; set; }
 
         protected override void OnStartup(StartupEventArgs e)
         {

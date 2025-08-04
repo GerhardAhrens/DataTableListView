@@ -13,14 +13,14 @@
 // </summary>
 //-----------------------------------------------------------------------
 
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Controls.Ribbon;
-
 namespace DataTableListView
 {
+    using System.ComponentModel;
+    using System.Runtime.CompilerServices;
+    using System.Windows;
+    using System.Windows.Controls;
+    using System.Windows.Controls.Ribbon;
+
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
@@ -34,7 +34,7 @@ namespace DataTableListView
             WeakEventManager<Window, RoutedEventArgs>.AddHandler(this, "Loaded", this.OnLoaded);
             WeakEventManager<Window, CancelEventArgs>.AddHandler(this, "Closing", this.OnWindowClosing);
 
-            this.WindowTitel = "Minimal WPF Template";
+            this.WindowTitel = "DataTable ListView Demo";
             this.DataContext = this;
         }
 
