@@ -22,15 +22,42 @@
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <Button
-            x:Name="BtnCloseApplication"
+        <StackPanel
             Grid.Row="0"
             Grid.Column="0"
-            Width="30"
-            Height="30"
-            HorizontalAlignment="Left">
-            <Image Source="{StaticResource ResourceKey=IconApplicationExit2}" Stretch="None" />
-        </Button>
+            Orientation="Horizontal">
+            <Button
+                x:Name="BtnCloseApplication"
+                Width="40"
+                Height="40"
+                HorizontalAlignment="Left">
+                <Image Source="{StaticResource ResourceKey=IconApplicationExit2}" Stretch="None" />
+            </Button>
+
+            <Button
+                x:Name="BtnNewRow"
+                Width="40"
+                Height="40"
+                HorizontalAlignment="Left">
+                <Image Source="{StaticResource ResourceKey=IconNewRow}" Stretch="None" />
+            </Button>
+
+            <Button
+                x:Name="BtnDeleteRow"
+                Width="40"
+                Height="40"
+                HorizontalAlignment="Left">
+                <Image Source="{StaticResource ResourceKey=IconDeleteRow}" Stretch="None" />
+            </Button>
+
+            <Button
+                x:Name="BtnEditRow"
+                Width="40"
+                Height="40"
+                HorizontalAlignment="Left">
+                <Image Source="{StaticResource ResourceKey=IconEditRow}" Stretch="None" />
+            </Button>
+        </StackPanel>
 
         <Rectangle
             Grid.Row="0"
@@ -39,13 +66,73 @@
             HorizontalAlignment="Stretch"
             Fill="Black" />
 
-        <TextBlock
+        <ListView
             Grid.Row="1"
             Grid.Column="0"
-            HorizontalAlignment="Center"
-            VerticalAlignment="Center"
-            FontSize="24"
-            Text="Minimal WPF Template" />
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Top"
+            IsSynchronizedWithCurrentItem="True"
+            IsTabStop="False"
+            ItemsSource="{Binding Path=ListViewSource, UpdateSourceTrigger=PropertyChanged}"
+            ScrollViewer.IsDeferredScrollingEnabled="False"
+            SelectedItem="{Binding Path=CurrentSelectedItem, UpdateSourceTrigger=PropertyChanged}">
+
+            <ListView.GroupStyle>
+                <GroupStyle>
+                    <GroupStyle.HeaderTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Name}" />
+                        </DataTemplate>
+                    </GroupStyle.HeaderTemplate>
+                </GroupStyle>
+            </ListView.GroupStyle>
+
+            <ListView.ItemContainerStyle>
+                <Style TargetType="{x:Type ListViewItem}">
+                    <EventSetter Event="MouseDoubleClick" Handler="OnMouseDoubleClickHandler" />
+                </Style>
+            </ListView.ItemContainerStyle>
+
+            <ListView.ContextMenu>
+                <ContextMenu>
+                    <MenuItem x:Name="mnuCurrentRow" Header="Ändern" />
+                </ContextMenu>
+            </ListView.ContextMenu>
+
+            <ListView.View>
+                <GridView AllowsColumnReorder="True">
+                    <GridViewColumn
+                        Width="80"
+                        DisplayMemberBinding="{Binding Path=[Kapitel]}"
+                        Header="Kapitel" />
+
+                    <GridViewColumn
+                        Width="200"
+                        DisplayMemberBinding="{Binding Path=[KapitelTitel]}"
+                        Header="Thema" />
+
+                    <GridViewColumn
+                        Width="300"
+                        DisplayMemberBinding="{Binding Path=[Titel]}"
+                        Header="Beschreibung" />
+
+                    <GridViewColumn
+                        Width="90"
+                        DisplayMemberBinding="{Binding Path=[AufwandMax], StringFormat=N2}"
+                        Header="Aufwand Max" />
+
+                    <GridViewColumn
+                        Width="90"
+                        DisplayMemberBinding="{Binding Path=[AufwandMid], StringFormat=N2}"
+                        Header="Aufwand Mittel" />
+
+                    <GridViewColumn
+                        Width="90"
+                        DisplayMemberBinding="{Binding Path=[AufwandMin], StringFormat=N2}"
+                        Header="Aufwand Min" />
+                </GridView>
+            </ListView.View>
+        </ListView>
 
     </Grid>
 </Window>

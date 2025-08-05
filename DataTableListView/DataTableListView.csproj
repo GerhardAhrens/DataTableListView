@@ -24,6 +24,8 @@
 
   <ItemGroup>
     <Folder Include="DemoData\" />
+    <Folder Include="Extension\" />
+    <Folder Include="Generator\" />
     <Folder Include="Resources\Application\" />
     <Folder Include="Resources\Style\" />
   </ItemGroup>

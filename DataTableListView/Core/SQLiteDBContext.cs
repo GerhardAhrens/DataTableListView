@@ -25,23 +25,36 @@
 namespace DataTableListView.Core
 {
     using System;
-
+    using System.Data;
     using System.Data.SQLite;
     using System.IO;
 
-    public class SQLiteContext : IDisposable
+    public class SQLiteDBContext : IDisposable
     {
         private bool classIsDisposed;
 
+        public SQLiteDBContext()
+        {
+            if (File.Exists(App.DatabasePath) == true)
+            {
+                this.ConnectString = ConnectStringToText(App.DatabasePath);
+                this.CreateConnection(ConnectString);
+            }
+            else
+            {
+                throw new FileNotFoundException($"Die Datenbankdatei '{App.DatabasePath}' wurde nicht gefunden!");
+            }
+        }
+
         /// <summary>
-        /// Initializes a new instance of the <see cref="SQLiteContext"/> class.
+        /// Initializes a new instance of the <see cref="SQLiteDBContext"/> class.
         /// </summary>
-        public SQLiteContext(string databaseName)
+        public SQLiteDBContext(string databaseName)
         {
             if (File.Exists(databaseName) == true)
             {
                 this.ConnectString = ConnectStringToText(databaseName);
-                CreateConnection(ConnectString);
+                this.CreateConnection(ConnectString);
             }
             else
             {
@@ -51,16 +64,20 @@ namespace DataTableListView.Core
 
         public string ConnectString { get; private set; }
 
-        public static SQLiteConnection Connection { get; private set; }
+        public SQLiteConnection Connection { get; private set; }
 
-        private static void CreateConnection(string connectionString)
+        public ConnectionState ConnectionState { get; private set; }
+
+        private void CreateConnection(string connectionString)
         {
             try
             {
                 SQLiteConnection conn = new SQLiteConnection(connectionString);
-                if (conn != null && conn.State != System.Data.ConnectionState.Open)
+                if (conn != null && conn.State != ConnectionState.Open)
                 {
-                    Connection = conn;
+                    conn.Open();
+                    this.Connection = conn;
+                    this.ConnectionState = conn.State;
                 }
             }
             catch (SQLiteException ex)
@@ -79,7 +96,7 @@ namespace DataTableListView.Core
         {
             SQLiteConnectionStringBuilder conString = new SQLiteConnectionStringBuilder();
             conString.DataSource = databasePath;
-            conString.DefaultTimeout = 30;
+            conString.DefaultTimeout = 15;
             conString.SyncMode = SynchronizationModes.Off;
             conString.JournalMode = SQLiteJournalModeEnum.Memory;
             conString.PageSize = 65536;
@@ -106,7 +123,7 @@ namespace DataTableListView.Core
             {
                 if (classDisposing == true)
                 {
-                    this.Connection = null;
+                    Connection = null;
                 }
             }
 
