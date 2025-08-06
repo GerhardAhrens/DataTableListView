@@ -14,8 +14,9 @@
     </Window.Icon>
     <Grid x:Name="gridMain">
         <Grid.RowDefinitions>
-            <RowDefinition Height="35" />
+            <RowDefinition Height="45" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="35" />
         </Grid.RowDefinitions>
 
         <Grid.ColumnDefinitions>
@@ -57,20 +58,36 @@
                 HorizontalAlignment="Left">
                 <Image Source="{StaticResource ResourceKey=IconEditRow}" Stretch="None" />
             </Button>
+
+            <Button
+                x:Name="BtnSaveRow"
+                Width="40"
+                Height="40"
+                Margin="10,0,0,0"
+                HorizontalAlignment="Left">
+                <Image Source="{StaticResource ResourceKey=IconSaveRow}" Stretch="None" />
+            </Button>
+
+            <Button
+                x:Name="BtnUndoRow"
+                Width="40"
+                Height="40"
+                Margin="10,0,0,0"
+                HorizontalAlignment="Left">
+                <Image Source="{StaticResource ResourceKey=IconUndoRow}" Stretch="None" />
+            </Button>
         </StackPanel>
 
         <Rectangle
             Grid.Row="0"
             Height="2"
-            Margin="0,33,0,0"
+            Margin="0,40,0,0"
             HorizontalAlignment="Stretch"
             Fill="Black" />
 
         <ListView
             Grid.Row="1"
             Grid.Column="0"
-            HorizontalAlignment="Stretch"
-            VerticalAlignment="Top"
             IsSynchronizedWithCurrentItem="True"
             IsTabStop="False"
             ItemsSource="{Binding Path=ListViewSource, UpdateSourceTrigger=PropertyChanged}"
@@ -130,9 +147,27 @@
                         Width="90"
                         DisplayMemberBinding="{Binding Path=[AufwandMin], StringFormat=N2}"
                         Header="Aufwand Min" />
+
+                    <GridViewColumn Width="60" Header="Status">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <CheckBox IsChecked="{Binding Path=[Aktiv]}" />
+                                </Grid>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
                 </GridView>
             </ListView.View>
         </ListView>
+
+        <TextBlock
+            Grid.Row="2"
+            Grid.Column="0"
+            Margin="10,0,0,0">
+            <Run FontWeight="Medium" Text="Meldung:" />
+            <Run Text="{Binding Path=NotifyMessage, UpdateSourceTrigger=PropertyChanged}" />
+        </TextBlock>
 
     </Grid>
 </Window>

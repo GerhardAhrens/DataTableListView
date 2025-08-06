@@ -36,6 +36,7 @@ namespace DataTableListView
         private ICollectionView _ListViewSource;
         private DataRow _CurrentSelectedItem;
         private int _DisplayRowCount;
+        private string _NotifyMessage;
 
         public MainWindow()
         {
@@ -56,6 +57,19 @@ namespace DataTableListView
                 if (this._WindowTitel != value)
                 {
                     this._WindowTitel = value;
+                    this.OnPropertyChanged();
+                }
+            }
+        }
+
+        public string NotifyMessage
+        {
+            get { return _NotifyMessage; }
+            set
+            {
+                if (this._NotifyMessage != value)
+                {
+                    this._NotifyMessage = value;
                     this.OnPropertyChanged();
                 }
             }
@@ -125,6 +139,8 @@ namespace DataTableListView
             WeakEventManager<Button, RoutedEventArgs>.AddHandler(this.BtnNewRow, "Click", this.OnNewRow);
             WeakEventManager<Button, RoutedEventArgs>.AddHandler(this.BtnDeleteRow, "Click", this.OnDeleteRow);
             WeakEventManager<Button, RoutedEventArgs>.AddHandler(this.BtnEditRow, "Click", this.OnEditRow);
+            WeakEventManager<Button, RoutedEventArgs>.AddHandler(this.BtnSaveRow, "Click", this.OnSaveRow);
+            WeakEventManager<Button, RoutedEventArgs>.AddHandler(this.BtnUndoRow, "Click", this.OnUndoRow);
             WeakEventManager<MenuItem, RoutedEventArgs>.AddHandler(this.mnuCurrentRow, "Click", this.OnCurrentListViewItemClick);
 
             this.DataContext = this;
@@ -167,11 +183,27 @@ namespace DataTableListView
                         {
                             this.ListViewSource.MoveCurrentToPosition(currentPos);
                             this.CurrentSelectedItem = (DataRow)this.ListViewSource.CurrentItem;
+                            WeakEventManager<DataTable, DataRowChangeEventArgs>.AddHandler(this.CurrentSelectedItem.Table, "RowChanged", this.OnRowChanged);
                         }
                         else
                         {
                             this.ListViewSource.MoveCurrentToFirst();
                             this.CurrentSelectedItem = this.ListViewSource.Cast<DataRow>().First();
+                        }
+
+                        this.CurrentSelectedItem.Table.AcceptChanges();
+
+                        if (this.DisplayRowCount == 0)
+                        {
+                            this.NotifyMessage = $"Bereit: Kein Datensatz";
+                        }
+                        else if (this.DisplayRowCount == 1)
+                        {
+                            this.NotifyMessage = $"Bereit: {this.DisplayRowCount} Datensatz";
+                        }
+                        else if (this.DisplayRowCount > 1)
+                        {
+                            this.NotifyMessage = $"Bereit: {this.DisplayRowCount} Datensätze";
                         }
                     }
                 }
@@ -180,6 +212,28 @@ namespace DataTableListView
             {
                 string errorText = ex.Message;
                 throw;
+            }
+        }
+
+        private void OnRowChanged(object sender, DataRowChangeEventArgs e)
+        {
+            if (e.Row.Table.GetChanges(DataRowState.Modified) == null)
+            {
+                return;
+            }
+
+            int modifiedCount = e.Row.Table.GetChanges(DataRowState.Modified).Rows.Count;
+            if (modifiedCount == 0)
+            {
+                this.NotifyMessage = $"Bereit: Kein Datensatz geändert";
+            }
+            else if (modifiedCount == 1)
+            {
+                this.NotifyMessage = $"Bereit: {modifiedCount} Datensatz geändert";
+            }
+            else if (modifiedCount > 1)
+            {
+                this.NotifyMessage = $"Bereit: {modifiedCount} Datensätze geändert";
             }
         }
 
@@ -211,15 +265,15 @@ namespace DataTableListView
             {
                 DataRow dr = repository.NewDataRow();
                 dr.SetField<Guid>("Id", Guid.NewGuid());
-                dr.SetField<int>("Kapitel", 3);
-                dr.SetField<string>("KapitelTitel", "Test-Kapitel 3");
-                dr.SetField<string>("Titel", "Titelbeschreibung");
+                dr.SetField<int>("Kapitel", 4);
+                dr.SetField<string>("KapitelTitel", "Test-Kapitel 4");
+                dr.SetField<string>("Titel", "Titelbeschreibung-4");
                 dr.SetField<string>("Beschreibung", string.Empty);
-                dr.SetField<decimal>("AufwandMax", 2.5m);
-                dr.SetField<decimal>("AufwandMid", 1.5m);
-                dr.SetField<decimal>("AufwandMin", 1.0m);
+                dr.SetField<decimal>("AufwandMax", 4.5m);
+                dr.SetField<decimal>("AufwandMid", 4.5m);
+                dr.SetField<decimal>("AufwandMin", 4.0m);
+                dr.SetField<bool>("Aktiv", true);
                 repository.Add(dr);
-
                 MessageBox.Show("Neuer Datensatz in Tabelle übernommen.", "Speichern", MessageBoxButton.OK, MessageBoxImage.Information);
 
                 this.LoadDataHandler(true);
@@ -236,6 +290,7 @@ namespace DataTableListView
             decimal aufwandMax = this.CurrentSelectedItem.GetField<decimal>("AufwandMax");
             decimal aufwandMid = this.CurrentSelectedItem.GetField<decimal>("AufwandMid");
             decimal aufwandMin = this.CurrentSelectedItem.GetField<decimal>("AufwandMin");
+            bool aktiv = this.CurrentSelectedItem.GetField<bool>("Aktiv");
 
             aufwandMax = 3.5M;
             aufwandMid = 3.0M;
@@ -246,10 +301,13 @@ namespace DataTableListView
             {
                 using (DemoDataRepository repository = new DemoDataRepository())
                 {
+                    editRow.BeginEdit();
                     editRow.SetField<decimal>("AufwandMax", aufwandMax);
                     editRow.SetField<decimal>("AufwandMid", aufwandMid);
                     editRow.SetField<decimal>("AufwandMin", aufwandMin);
                     repository.Update(editRow);
+                    editRow.EndEdit();
+                    editRow.AcceptChanges();
                 }
             }
 
@@ -267,6 +325,7 @@ namespace DataTableListView
                     using (DemoDataRepository repository = new DemoDataRepository())
                     {
                         repository.Delete(this.CurrentSelectedItem);
+                        this.CurrentSelectedItem.Table.AcceptChanges();
                     }
 
                     this.LoadDataHandler(true);
@@ -280,6 +339,32 @@ namespace DataTableListView
 
         private void OnCurrentListViewItemClick(object sender, RoutedEventArgs e)
         {
+        }
+
+        private void OnSaveRow(object sender, RoutedEventArgs e)
+        {
+            Guid id = this.CurrentSelectedItem.GetField<Guid>("Id");
+            int kapitel = this.CurrentSelectedItem.GetField<int>("Kapitel");
+            string kapitelTitel = this.CurrentSelectedItem.GetField<string>("KapitelTitel");
+            string titel = this.CurrentSelectedItem.GetField<string>("Titel");
+            string beschreibung = this.CurrentSelectedItem.GetField<string>("Beschreibung");
+            decimal aufwandMax = this.CurrentSelectedItem.GetField<decimal>("AufwandMax");
+            decimal aufwandMid = this.CurrentSelectedItem.GetField<decimal>("AufwandMid");
+            decimal aufwandMin = this.CurrentSelectedItem.GetField<decimal>("AufwandMin");
+            bool aktiv = this.CurrentSelectedItem.GetField<bool>("Aktiv");
+
+            DataTable modifiedTables = this.CurrentSelectedItem.Table.GetChanges(DataRowState.Modified);
+            if (modifiedTables != null)
+            {
+                string msgText = $"Anzahl geänderte Datensätze: {modifiedTables.Rows.Count}";
+                MessageBox.Show(msgText, "Speichern", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
+        private void OnUndoRow(object sender, RoutedEventArgs e)
+        {
+            this.CurrentSelectedItem.Table.RejectChanges();
+            this.LoadDataHandler(true);
         }
 
         #region INotifyPropertyChanged implementierung
