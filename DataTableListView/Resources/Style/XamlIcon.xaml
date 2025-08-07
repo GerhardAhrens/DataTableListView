@@ -98,12 +98,38 @@
         </DrawingImage.Drawing>
     </DrawingImage>
 
+    <!--  ListView Kontextmenü  -->
     <Canvas
         x:Key="MenuEditRow"
         Width="24"
         Height="24">
         <Path Data="M10 20H6V4H13V9H18V12.1L20 10.1V8L14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H10V20M20.2 13C20.3 13 20.5 13.1 20.6 13.2L21.9 14.5C22.1 14.7 22.1 15.1 21.9 15.3L20.9 16.3L18.8 14.2L19.8 13.2C19.9 13.1 20 13 20.2 13M20.2 16.9L14.1 23H12V20.9L18.1 14.8L20.2 16.9Z" Fill="Green" />
     </Canvas>
+
+    <!--  ListView Row Navigation  -->
+    <DrawingImage x:Key="IconFirstRow">
+        <DrawingImage.Drawing>
+            <GeometryDrawing Brush="Black" Geometry="M18.41,16.59L13.82,12L18.41,7.41L17,6L11,12L17,18L18.41,16.59M6,6H8V18H6V6Z" />
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <DrawingImage x:Key="IconNextRow">
+        <DrawingImage.Drawing>
+            <GeometryDrawing Brush="Black" Geometry="M16,18H18V6H16M6,18L14.5,12L6,6V18Z" />
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <DrawingImage x:Key="IconPreviousRow">
+        <DrawingImage.Drawing>
+            <GeometryDrawing Brush="Black" Geometry="M6,18V6H8V18H6M9.5,12L18,6V18L9.5,12Z" />
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <DrawingImage x:Key="IconLastRow">
+        <DrawingImage.Drawing>
+            <GeometryDrawing Brush="Black" Geometry="M5.59,7.41L10.18,12L5.59,16.59L7,18L13,12L7,6L5.59,7.41M16,6H18V18H16V6Z" />
+        </DrawingImage.Drawing>
+    </DrawingImage>
 
     <!--#region Statuszeile-->
     <Viewbox

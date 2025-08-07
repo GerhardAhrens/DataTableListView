@@ -42,7 +42,7 @@
             <RowDefinition Height="45" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="35" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <Grid.ColumnDefinitions>
@@ -57,7 +57,8 @@
                 x:Name="BtnCloseApplication"
                 Width="40"
                 Height="40"
-                HorizontalAlignment="Left">
+                HorizontalAlignment="Left"
+                ToolTip="Demo beenden">
                 <Image Source="{StaticResource ResourceKey=IconApplicationExit2}" Stretch="None" />
             </Button>
 
@@ -65,7 +66,8 @@
                 x:Name="BtnNewRow"
                 Width="40"
                 Height="40"
-                HorizontalAlignment="Left">
+                HorizontalAlignment="Left"
+                ToolTip="Neuer Eintrag erstellen">
                 <Image Source="{StaticResource ResourceKey=IconNewRow}" Stretch="None" />
             </Button>
 
@@ -73,7 +75,8 @@
                 x:Name="BtnDeleteRow"
                 Width="40"
                 Height="40"
-                HorizontalAlignment="Left">
+                HorizontalAlignment="Left"
+                ToolTip="markierter Eintrag löschen">
                 <Image Source="{StaticResource ResourceKey=IconDeleteRow}" Stretch="None" />
             </Button>
 
@@ -81,7 +84,8 @@
                 x:Name="BtnEditRow"
                 Width="40"
                 Height="40"
-                HorizontalAlignment="Left">
+                HorizontalAlignment="Left"
+                ToolTip="Markierter Eintrag ändern">
                 <Image Source="{StaticResource ResourceKey=IconEditRow}" Stretch="None" />
             </Button>
 
@@ -90,7 +94,8 @@
                 Width="40"
                 Height="40"
                 Margin="10,0,0,0"
-                HorizontalAlignment="Left">
+                HorizontalAlignment="Left"
+                ToolTip="Alle Änderungen speichern">
                 <Image Source="{StaticResource ResourceKey=IconSaveRow}" Stretch="None" />
             </Button>
 
@@ -99,7 +104,8 @@
                 Width="40"
                 Height="40"
                 Margin="10,0,0,0"
-                HorizontalAlignment="Left">
+                HorizontalAlignment="Left"
+                ToolTip="Durchgeführte Änderungen zurücknehmen">
                 <Image Source="{StaticResource ResourceKey=IconUndoRow}" Stretch="None" />
             </Button>
         </StackPanel>
@@ -147,7 +153,8 @@
                         Width="30"
                         Height="30"
                         Margin="10,0,0,0"
-                        HorizontalAlignment="Left">
+                        HorizontalAlignment="Left"
+                        ToolTip="Suche durchführen">
                         <Image Source="{StaticResource ResourceKey=IconCreateSearch}" Stretch="None" />
                     </Button>
 
@@ -156,7 +163,8 @@
                         Width="30"
                         Height="30"
                         Margin="10,0,0,0"
-                        HorizontalAlignment="Left">
+                        HorizontalAlignment="Left"
+                        ToolTip="Suchkriterien löschen">
                         <Image Source="{StaticResource ResourceKey=IconClearSearch}" Stretch="None" />
                     </Button>
                 </StackPanel>
@@ -178,7 +186,8 @@
                         Width="30"
                         Height="30"
                         Margin="10,0,0,0"
-                        HorizontalAlignment="Left">
+                        HorizontalAlignment="Left"
+                        ToolTip="Gruppierung durchführen">
                         <Image Source="{StaticResource ResourceKey=IconCreateGroup}" Stretch="None" />
                     </Button>
 
@@ -187,7 +196,8 @@
                         Width="30"
                         Height="30"
                         Margin="10,0,0,0"
-                        HorizontalAlignment="Left">
+                        HorizontalAlignment="Left"
+                        ToolTip="Gruppierungskriterien löschen">
                         <Image Source="{StaticResource ResourceKey=IconClearGroup}" Stretch="None" />
                     </Button>
                 </StackPanel>
@@ -280,7 +290,7 @@
                                     IsTextSearchCaseSensitive="False"
                                     IsTextSearchEnabled="True"
                                     ItemsSource="{Binding Path=DataContext.AktionSource, Mode=OneWay, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ListView}}}"
-                                    SelectedValue="{Binding Path=[AktionId], UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                    SelectedValue="{Binding Path=[AktionId], UpdateSourceTrigger=LostFocus, Mode=TwoWay}"
                                     SelectedValuePath="[Id]"
                                     StaysOpenOnEdit="True" />
                             </DataTemplate>
@@ -294,7 +304,7 @@
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
                                 <Grid>
-                                    <CheckBox IsChecked="{Binding Path=[Aktiv]}" />
+                                    <CheckBox IsChecked="{Binding Path=[Aktiv]}" IsThreeState="True" />
                                 </Grid>
                             </DataTemplate>
                         </GridViewColumn.CellTemplate>
@@ -303,13 +313,56 @@
             </ListView.View>
         </ListView>
 
-        <TextBlock
+        <StackPanel
             Grid.Row="3"
             Grid.Column="0"
-            Margin="10,0,0,0">
-            <Run FontWeight="Medium" Text="Meldung:" />
-            <Run Text="{Binding Path=NotifyMessage, UpdateSourceTrigger=PropertyChanged}" />
-        </TextBlock>
+            Margin="10,0,0,0"
+            Orientation="Horizontal">
+            <Button
+                x:Name="BtnRowFirst"
+                Width="30"
+                Height="30"
+                HorizontalAlignment="Left"
+                ToolTip="An den Anfang der Liste">
+                <Image Source="{StaticResource ResourceKey=IconFirstRow}" Stretch="None" />
+            </Button>
+
+            <Button
+                x:Name="BtnRowNext"
+                Width="30"
+                Height="30"
+                HorizontalAlignment="Left"
+                ToolTip="Nächster Eintrag">
+                <Image Source="{StaticResource ResourceKey=IconNextRow}" Stretch="None" />
+            </Button>
+
+            <Button
+                x:Name="BtnRowPrevious"
+                Width="30"
+                Height="30"
+                HorizontalAlignment="Left"
+                ToolTip="Vorheriger Eintrag">
+                <Image Source="{StaticResource ResourceKey=IconPreviousRow}" Stretch="None" />
+            </Button>
+
+            <Button
+                x:Name="BtnRowLast"
+                Width="30"
+                Height="30"
+                HorizontalAlignment="Left"
+                ToolTip="Demo beenden">
+                <Image Source="{StaticResource ResourceKey=IconLastRow}" Stretch="None" />
+            </Button>
+
+            <TextBlock
+                Margin="50,0,0,0"
+                VerticalAlignment="Center"
+                FontSize="14">
+                <Run FontWeight="Medium" Text="Meldung:" />
+                <Run Text="{Binding Path=NotifyMessage, UpdateSourceTrigger=PropertyChanged}" />
+            </TextBlock>
+
+        </StackPanel>
 
     </Grid>
 </Window>

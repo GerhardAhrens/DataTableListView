@@ -18,11 +18,9 @@ namespace DataTableListView
     using System.ComponentModel;
     using System.Data;
     using System.Globalization;
-    using System.Net.NetworkInformation;
     using System.Runtime.CompilerServices;
     using System.Windows;
     using System.Windows.Controls;
-    using System.Windows.Controls.Ribbon;
     using System.Windows.Data;
     using System.Windows.Input;
 
@@ -51,6 +49,7 @@ namespace DataTableListView
             this.InitializeComponent();
             WeakEventManager<Window, RoutedEventArgs>.AddHandler(this, "Loaded", this.OnLoaded);
             WeakEventManager<Window, CancelEventArgs>.AddHandler(this, "Closing", this.OnWindowClosing);
+
 
             this.WindowTitel = "DataTable ListView Demo";
         }
@@ -220,12 +219,15 @@ namespace DataTableListView
             WeakEventManager<Button, RoutedEventArgs>.AddHandler(this.BtnClearGroup, "Click", this.OnCreateGroup);
             WeakEventManager<Button, RoutedEventArgs>.AddHandler(this.BtnCreateSearch, "Click", this.OnCreateSearch);
             WeakEventManager<Button, RoutedEventArgs>.AddHandler(this.BtnClearSearch, "Click", this.OnCreateSearch);
+            WeakEventManager<Button, RoutedEventArgs>.AddHandler(this.BtnRowFirst, "Click", this.OnRowNavigation);
+            WeakEventManager<Button, RoutedEventArgs>.AddHandler(this.BtnRowNext, "Click", this.OnRowNavigation);
+            WeakEventManager<Button, RoutedEventArgs>.AddHandler(this.BtnRowPrevious, "Click", this.OnRowNavigation);
+            WeakEventManager<Button, RoutedEventArgs>.AddHandler(this.BtnRowLast, "Click", this.OnRowNavigation);
 
             this.DataContext = this;
 
             this.LoadDataHandler();
         }
-
 
         private void OnCloseApplication(object sender, RoutedEventArgs e)
         {
@@ -276,9 +278,9 @@ namespace DataTableListView
                                 this.CurrentSelectedItem = this.ListViewSource.Cast<DataRow>().First();
                             }
 
+                            this.ListViewSource.Cast<DataRow>().First().Table.AcceptChanges();
                             WeakEventManager<DataTable, DataRowChangeEventArgs>.RemoveHandler(this.CurrentSelectedItem.Table, "RowChanged", this.OnRowChanged);
                             WeakEventManager<DataTable, DataRowChangeEventArgs>.AddHandler(this.CurrentSelectedItem.Table, "RowChanged", this.OnRowChanged);
-                            this.CurrentSelectedItem.Table.AcceptChanges();
                         }
 
                         if (this.DisplayRowCount == 0)
@@ -494,18 +496,26 @@ namespace DataTableListView
             decimal aufwandMax = this.CurrentSelectedItem.GetField<decimal>("AufwandMax");
             decimal aufwandMid = this.CurrentSelectedItem.GetField<decimal>("AufwandMid");
             decimal aufwandMin = this.CurrentSelectedItem.GetField<decimal>("AufwandMin");
-            bool aktiv = this.CurrentSelectedItem.GetField<bool>("Aktiv");
+            bool? aktiv = this.CurrentSelectedItem.GetField<bool?>("Aktiv");
             int aktionId = this.CurrentSelectedItem.GetField<int>("AktionId");
 
             DataTable modifiedTables = this.CurrentSelectedItem.Table.GetChanges(DataRowState.Modified);
             if (modifiedTables != null)
             {
-                string msgText = $"Anzahl geänderte Datensätze: {modifiedTables.Rows.Count}";
-                MessageBox.Show(msgText, "Speichern", MessageBoxButton.OK, MessageBoxImage.Information);
+                string msgText = $"Sollen die anstehenden Änderungen ({modifiedTables.Rows.Count}) gespeichert werden?";
+                MessageBoxResult msgYN = MessageBox.Show(msgText, "Änderungen speichern", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                if (msgYN == MessageBoxResult.Yes)
+                {
+                    using (DemoDataRepository repository = new DemoDataRepository())
+                    {
+                        foreach (DataRow item in modifiedTables.Rows)
+                        {
+                            repository.Update(item);
+                        }
+                    }
 
-
-
-                this.LoadDataHandler(true);
+                    this.LoadDataHandler(true);
+                }
             }
         }
 
@@ -575,6 +585,26 @@ namespace DataTableListView
                 this.SelectedColumnSearch = string.Empty;
                 this.FilterColumnSearch = string.Empty;
                 this.LoadDataHandler(true);
+            }
+        }
+
+        private void OnRowNavigation(object sender, RoutedEventArgs e)
+        {
+            if ((Button)sender != null && ((Button)sender).Name == "BtnRowFirst")
+            {
+                this.ListViewSource.MoveCurrentToFirst();
+            }
+            else if ((Button)sender != null && ((Button)sender).Name == "BtnRowNext")
+            {
+                this.ListViewSource.MoveCurrentToNext();
+            }
+            else if ((Button)sender != null && ((Button)sender).Name == "BtnRowPrevious")
+            {
+                this.ListViewSource.MoveCurrentToPrevious();
+            }
+            else if ((Button)sender != null && ((Button)sender).Name == "BtnRowLast")
+            {
+                this.ListViewSource.MoveCurrentToLast();
             }
         }
 
