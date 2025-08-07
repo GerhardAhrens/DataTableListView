@@ -15,6 +15,7 @@ namespace System.Data
 {
     using System.Globalization;
     using System.Runtime.Versioning;
+    using System.Text;
 
     [SupportedOSPlatform("windows")]
     public static class DataRowExtensions
@@ -130,6 +131,53 @@ namespace System.Data
             clonedRow.ItemArray = @this.ItemArray;
             return clonedRow;
         }
+
+        public static bool HasColumn(this DataRow @this, string columnName)
+        {
+            bool result = false;
+
+            int columnFound = @this.Table.Columns.OfType<DataColumn>().ToList().Count(c => c.ColumnName.ToLower() == columnName.ToLower());
+            if (columnFound > 0)
+            {
+                result = true;
+            }
+
+            return result;
+        }
+
+        public static string ItemArrayToString(this DataRow @this, char separator = ',')
+        {
+            return string.Join(separator, @this.ItemArray);
+        }
+
+        public static string ToString(this DataRow @this, char separator = ',')
+        {
+            return string.Join(separator, @this.ItemArray.Select(c => c.ToString()).ToArray());
+        }
+
+        public static string ToString(this DataRow @this, string columns, char separator = ',')
+        {
+            StringBuilder sb = new StringBuilder();
+
+            string[] columnList = columns.Split(',');
+
+            foreach (string column in columnList)
+            {
+                if (@this.HasColumn(column) == true)
+                {
+                    sb.Append(@this[column].ToString());
+                    sb.Append(separator);
+                }
+            }
+
+            if (sb.ToString().Trim().Length > 0)
+            {
+                sb.Remove(sb.ToString().Trim().Length - 1, 1);
+            }
+
+            return sb.ToString();
+        }
+
 
         public static bool Equals(this DataRow @this, DataRow secondDataRow)
         {

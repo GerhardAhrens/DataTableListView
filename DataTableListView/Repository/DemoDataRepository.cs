@@ -81,6 +81,23 @@ namespace DataTableListView.Repository
             return result;
         }
 
+        public ICollectionView SelectAktion()
+        {
+            ICollectionView result = null;
+
+            try
+            {
+                result = base.Connection.RecordSet<ICollectionView>($"SELECT * FROM TAB_Aktion").Get().Result;
+            }
+            catch (Exception ex)
+            {
+                string errorText = ex.Message;
+                throw;
+            }
+
+            return result;
+        }
+
         public DataRow NewDataRow()
         {
             DataRow result = null;

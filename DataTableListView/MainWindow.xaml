@@ -6,15 +6,41 @@
     xmlns:local="clr-namespace:DataTableListView"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title="{Binding Path=WindowTitel, FallbackValue=~WindowTitel}"
-    Width="900"
+    Width="1050"
     Height="600"
     mc:Ignorable="d">
     <Window.Icon>
         <BitmapImage UriSource="pack://application:,,,/Resources/Picture/ApplicationIcon.png" />
     </Window.Icon>
+
+    <Window.Resources>
+        <DataTemplate x:Key="HeaderTemplateArrowUp">
+            <DockPanel>
+                <TextBlock HorizontalAlignment="Center" Text="{Binding}" />
+                <Path
+                    x:Name="arrow"
+                    Data="M 5,10 L 15,10 L 10,5 L 5,10"
+                    Fill="Gray"
+                    StrokeThickness="1" />
+            </DockPanel>
+        </DataTemplate>
+
+        <DataTemplate x:Key="HeaderTemplateArrowDown">
+            <DockPanel>
+                <TextBlock HorizontalAlignment="Center" Text="{Binding}" />
+                <Path
+                    x:Name="arrow"
+                    Data="M 5,5 L 10,10 L 15,5 L 5,5"
+                    Fill="Gray"
+                    StrokeThickness="1" />
+            </DockPanel>
+        </DataTemplate>
+    </Window.Resources>
+
     <Grid x:Name="gridMain">
         <Grid.RowDefinitions>
             <RowDefinition Height="45" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="35" />
         </Grid.RowDefinitions>
@@ -85,9 +111,94 @@
             HorizontalAlignment="Stretch"
             Fill="Black" />
 
-        <ListView
+        <StackPanel
             Grid.Row="1"
             Grid.Column="0"
+            Orientation="Horizontal">
+            <TextBlock Margin="10,0,10,0" VerticalAlignment="Center">
+                <Run FontWeight="Medium" Text="Filter:" />
+            </TextBlock>
+
+            <TextBox
+                Width="200"
+                Height="25"
+                Text="{Binding Path=FilterDefaultSearch, UpdateSourceTrigger=PropertyChanged}" />
+
+            <GroupBox Margin="10,0,0,0" Header="Filter für Spalte">
+                <StackPanel Orientation="Horizontal">
+                    <ComboBox
+                        x:Name="cmbColumnsSearch"
+                        Width="100"
+                        Height="25"
+                        IsEditable="True"
+                        ItemsSource="{Binding Path=ColumnsSource}"
+                        SelectedIndex="-1"
+                        SelectedValue="{Binding Path=SelectedColumnSearch, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <TextBox
+                        x:Name="txtColumnFilter"
+                        Height="25"
+                        MinWidth="100"
+                        Margin="10,0,0,0"
+                        Text="{Binding Path=FilterColumnSearch, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <Button
+                        x:Name="BtnCreateSearch"
+                        Width="30"
+                        Height="30"
+                        Margin="10,0,0,0"
+                        HorizontalAlignment="Left">
+                        <Image Source="{StaticResource ResourceKey=IconCreateSearch}" Stretch="None" />
+                    </Button>
+
+                    <Button
+                        x:Name="BtnClearSearch"
+                        Width="30"
+                        Height="30"
+                        Margin="10,0,0,0"
+                        HorizontalAlignment="Left">
+                        <Image Source="{StaticResource ResourceKey=IconClearSearch}" Stretch="None" />
+                    </Button>
+                </StackPanel>
+            </GroupBox>
+
+            <GroupBox Margin="10,0,0,0" Header="Gruppieren für Spalte">
+                <StackPanel Margin="0,5,0,0" Orientation="Horizontal">
+                    <ComboBox
+                        x:Name="cmbColumnsGroups"
+                        Width="100"
+                        Height="25"
+                        IsEditable="True"
+                        ItemsSource="{Binding Path=ColumnsSource}"
+                        SelectedIndex="-1"
+                        SelectedValue="{Binding Path=SelectedColumnGroup, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <Button
+                        x:Name="BtnCreateGroup"
+                        Width="30"
+                        Height="30"
+                        Margin="10,0,0,0"
+                        HorizontalAlignment="Left">
+                        <Image Source="{StaticResource ResourceKey=IconCreateGroup}" Stretch="None" />
+                    </Button>
+
+                    <Button
+                        x:Name="BtnClearGroup"
+                        Width="30"
+                        Height="30"
+                        Margin="10,0,0,0"
+                        HorizontalAlignment="Left">
+                        <Image Source="{StaticResource ResourceKey=IconClearGroup}" Stretch="None" />
+                    </Button>
+                </StackPanel>
+            </GroupBox>
+        </StackPanel>
+
+        <ListView
+            x:Name="LvwRoot"
+            Grid.Row="2"
+            Grid.Column="0"
+            GridViewColumnHeader.Click="OnListViewHeaderClick"
             IsSynchronizedWithCurrentItem="True"
             IsTabStop="False"
             ItemsSource="{Binding Path=ListViewSource, UpdateSourceTrigger=PropertyChanged}"
@@ -112,7 +223,10 @@
 
             <ListView.ContextMenu>
                 <ContextMenu>
-                    <MenuItem x:Name="mnuCurrentRow" Header="Ändern" />
+                    <MenuItem
+                        x:Name="mnuCurrentRow"
+                        Header="Ändern"
+                        Icon="{StaticResource ResourceKey=MenuEditRow}" />
                 </ContextMenu>
             </ListView.ContextMenu>
 
@@ -124,31 +238,59 @@
                         Header="Kapitel" />
 
                     <GridViewColumn
+                        x:Name="KapitelTitel"
                         Width="200"
                         DisplayMemberBinding="{Binding Path=[KapitelTitel]}"
                         Header="Thema" />
 
                     <GridViewColumn
+                        x:Name="Titel"
                         Width="300"
                         DisplayMemberBinding="{Binding Path=[Titel]}"
                         Header="Beschreibung" />
 
                     <GridViewColumn
+                        x:Name="AufwandMax"
                         Width="90"
                         DisplayMemberBinding="{Binding Path=[AufwandMax], StringFormat=N2}"
                         Header="Aufwand Max" />
 
                     <GridViewColumn
+                        x:Name="AufwandMid"
                         Width="90"
                         DisplayMemberBinding="{Binding Path=[AufwandMid], StringFormat=N2}"
                         Header="Aufwand Mittel" />
 
                     <GridViewColumn
+                        x:Name="AufwandMin"
                         Width="90"
                         DisplayMemberBinding="{Binding Path=[AufwandMin], StringFormat=N2}"
                         Header="Aufwand Min" />
 
-                    <GridViewColumn Width="60" Header="Status">
+                    <GridViewColumn
+                        x:Name="Aktion"
+                        Width="115"
+                        Header="Aktion">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <ComboBox
+                                    Width="100"
+                                    DisplayMemberPath="[Value]"
+                                    IsEditable="True"
+                                    IsTextSearchCaseSensitive="False"
+                                    IsTextSearchEnabled="True"
+                                    ItemsSource="{Binding Path=DataContext.AktionSource, Mode=OneWay, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ListView}}}"
+                                    SelectedValue="{Binding Path=[AktionId], UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                    SelectedValuePath="[Id]"
+                                    StaysOpenOnEdit="True" />
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+
+                    <GridViewColumn
+                        x:Name="Status"
+                        Width="60"
+                        Header="Status">
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
                                 <Grid>
@@ -162,7 +304,7 @@
         </ListView>
 
         <TextBlock
-            Grid.Row="2"
+            Grid.Row="3"
             Grid.Column="0"
             Margin="10,0,0,0">
             <Run FontWeight="Medium" Text="Meldung:" />

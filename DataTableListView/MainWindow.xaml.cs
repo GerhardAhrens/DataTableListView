@@ -17,10 +17,13 @@ namespace DataTableListView
 {
     using System.ComponentModel;
     using System.Data;
+    using System.Globalization;
+    using System.Net.NetworkInformation;
     using System.Runtime.CompilerServices;
     using System.Windows;
     using System.Windows.Controls;
     using System.Windows.Controls.Ribbon;
+    using System.Windows.Data;
     using System.Windows.Input;
 
     using DataTableListView.Repository;
@@ -33,10 +36,15 @@ namespace DataTableListView
         public event PropertyChangedEventHandler PropertyChanged;
         private string _WindowTitel;
         private string _FilterDefaultSearch;
+        private string _FilterColumnSearch;
+        private string _SelectedColumnSearch;
         private ICollectionView _ListViewSource;
+        private ICollectionView _AktionSource;
         private DataRow _CurrentSelectedItem;
         private int _DisplayRowCount;
         private string _NotifyMessage;
+        private IEnumerable<string> _ColumnsSource;
+        private string _SelectedColumnGroup;
 
         public MainWindow()
         {
@@ -89,6 +97,19 @@ namespace DataTableListView
             }
         }
 
+        public string FilterColumnSearch
+        {
+            get { return _FilterColumnSearch; }
+            set
+            {
+                if (this._FilterColumnSearch != value)
+                {
+                    this._FilterColumnSearch = value;
+                    this.OnPropertyChanged();
+                }
+            }
+        }
+
         public ICollectionView ListViewSource
         {
             get { return _ListViewSource; }
@@ -127,6 +148,59 @@ namespace DataTableListView
                 }
             }
         }
+
+        public ICollectionView AktionSource
+        {
+            get { return _AktionSource; }
+            set
+            {
+                if (this._AktionSource != value)
+                {
+                    this._AktionSource = value;
+                    this.OnPropertyChanged();
+                }
+            }
+        }
+
+        public IEnumerable<string> ColumnsSource
+        {
+            get { return this._ColumnsSource; }
+            set
+            {
+                if (this._ColumnsSource != value)
+                {
+                    this._ColumnsSource = value;
+                    this.OnPropertyChanged();
+                }
+            }
+        }
+
+        public string SelectedColumnGroup
+        {
+            get { return _SelectedColumnGroup; }
+            set
+            {
+                if (this._SelectedColumnGroup != value)
+                {
+                    this._SelectedColumnGroup = value;
+                    this.OnPropertyChanged();
+                }
+            }
+        }
+
+        public string SelectedColumnSearch
+        {
+            get { return _SelectedColumnSearch; }
+            set
+            {
+                if (this._SelectedColumnSearch != value)
+                {
+                    this._SelectedColumnSearch = value;
+                    this.OnPropertyChanged();
+                }
+            }
+        }
+
         #endregion Properties
 
 
@@ -141,12 +215,17 @@ namespace DataTableListView
             WeakEventManager<Button, RoutedEventArgs>.AddHandler(this.BtnEditRow, "Click", this.OnEditRow);
             WeakEventManager<Button, RoutedEventArgs>.AddHandler(this.BtnSaveRow, "Click", this.OnSaveRow);
             WeakEventManager<Button, RoutedEventArgs>.AddHandler(this.BtnUndoRow, "Click", this.OnUndoRow);
-            WeakEventManager<MenuItem, RoutedEventArgs>.AddHandler(this.mnuCurrentRow, "Click", this.OnCurrentListViewItemClick);
+            WeakEventManager<MenuItem, RoutedEventArgs>.AddHandler(this.mnuCurrentRow, "Click", this.OnEditRow);
+            WeakEventManager<Button, RoutedEventArgs>.AddHandler(this.BtnCreateGroup, "Click", this.OnCreateGroup);
+            WeakEventManager<Button, RoutedEventArgs>.AddHandler(this.BtnClearGroup, "Click", this.OnCreateGroup);
+            WeakEventManager<Button, RoutedEventArgs>.AddHandler(this.BtnCreateSearch, "Click", this.OnCreateSearch);
+            WeakEventManager<Button, RoutedEventArgs>.AddHandler(this.BtnClearSearch, "Click", this.OnCreateSearch);
 
             this.DataContext = this;
 
             this.LoadDataHandler();
         }
+
 
         private void OnCloseApplication(object sender, RoutedEventArgs e)
         {
@@ -175,23 +254,32 @@ namespace DataTableListView
                 using (DemoDataRepository repository = new DemoDataRepository())
                 {
                     this.DisplayRowCount = repository.Count();
+
+                    this.AktionSource = repository.SelectAktion();
+
                     this.ListViewSource = repository.Select();
                     if (this.ListViewSource != null)
                     {
+                        this.ColumnsSource = this.ListViewSource.Cast<DataRow>().First().Table.Columns.Cast<DataColumn>().Select(s => s.ColumnName).ToList();
                         this.DisplayRowCount = this.ListViewSource.Cast<DataRow>().Count();
-                        if (isRefresh == false)
+                        if (this.DisplayRowCount > 0)
                         {
-                            this.ListViewSource.MoveCurrentToPosition(currentPos);
-                            this.CurrentSelectedItem = (DataRow)this.ListViewSource.CurrentItem;
-                            WeakEventManager<DataTable, DataRowChangeEventArgs>.AddHandler(this.CurrentSelectedItem.Table, "RowChanged", this.OnRowChanged);
-                        }
-                        else
-                        {
-                            this.ListViewSource.MoveCurrentToFirst();
-                            this.CurrentSelectedItem = this.ListViewSource.Cast<DataRow>().First();
-                        }
+                            this.ListViewSource.Filter = rowItem => this.DataDefaultFilter(rowItem as DataRow);
+                            if (isRefresh == false)
+                            {
+                                this.ListViewSource.MoveCurrentToPosition(currentPos);
+                                this.CurrentSelectedItem = (DataRow)this.ListViewSource.CurrentItem;
+                            }
+                            else
+                            {
+                                this.ListViewSource.MoveCurrentToFirst();
+                                this.CurrentSelectedItem = this.ListViewSource.Cast<DataRow>().First();
+                            }
 
-                        this.CurrentSelectedItem.Table.AcceptChanges();
+                            WeakEventManager<DataTable, DataRowChangeEventArgs>.RemoveHandler(this.CurrentSelectedItem.Table, "RowChanged", this.OnRowChanged);
+                            WeakEventManager<DataTable, DataRowChangeEventArgs>.AddHandler(this.CurrentSelectedItem.Table, "RowChanged", this.OnRowChanged);
+                            this.CurrentSelectedItem.Table.AcceptChanges();
+                        }
 
                         if (this.DisplayRowCount == 0)
                         {
@@ -212,6 +300,35 @@ namespace DataTableListView
             {
                 string errorText = ex.Message;
                 throw;
+            }
+        }
+
+        private void OnListViewHeaderClick(object sender, RoutedEventArgs e)
+        {
+            GridViewColumnHeader currentHeader = e.OriginalSource as GridViewColumnHeader;
+            if (currentHeader != null && currentHeader.Role != GridViewColumnHeaderRole.Padding)
+            {
+                using (this.ListViewSource.DeferRefresh())
+                {
+                    string headerName = ((Binding)currentHeader.Column.DisplayMemberBinding).Path.Path;
+                    Func<SortDescription, bool> lamda = item => item.PropertyName.Equals(headerName, StringComparison.Ordinal);
+                    if (this.ListViewSource.SortDescriptions.Any(lamda) == true)
+                    {
+                        SortDescription currentSortDescription = this.ListViewSource.SortDescriptions.First(lamda);
+                        ListSortDirection sortDescription = currentSortDescription.Direction == ListSortDirection.Ascending
+                            ? ListSortDirection.Descending : ListSortDirection.Ascending;
+
+                        currentHeader.Column.HeaderTemplate = currentSortDescription.Direction == ListSortDirection.Ascending ?
+                            this.Resources["HeaderTemplateArrowDown"] as DataTemplate : this.Resources["HeaderTemplateArrowUp"] as DataTemplate;
+
+                        this.ListViewSource.SortDescriptions.Remove(currentSortDescription);
+                        this.ListViewSource.SortDescriptions.Insert(0, new SortDescription(headerName, sortDescription));
+                    }
+                    else
+                    {
+                        this.ListViewSource.SortDescriptions.Add(new SortDescription(headerName, ListSortDirection.Ascending));
+                    }
+                }
             }
         }
 
@@ -244,6 +361,31 @@ namespace DataTableListView
             if (rowItem == null)
             {
                 return false;
+            }
+
+            string textFilterString = (this.FilterDefaultSearch ?? string.Empty).ToUpper(CultureInfo.CurrentCulture);
+            if (string.IsNullOrEmpty(textFilterString) == false)
+            {
+                string fullRow = rowItem.ToString("KapitelTitel,Titel,Beschreibung");
+                if (string.IsNullOrEmpty(fullRow) == true)
+                {
+                    return true;
+                }
+
+                string[] words = textFilterString.Split([' '], StringSplitOptions.RemoveEmptyEntries);
+                foreach (string word in words.AsParallel<string>())
+                {
+                    found = fullRow.Contains(word, StringComparison.CurrentCultureIgnoreCase);
+
+                    if (found == false)
+                    {
+                        return false;
+                    }
+                }
+            }
+            else
+            {
+                found = true;
             }
 
             return found;
@@ -335,6 +477,7 @@ namespace DataTableListView
 
         private void OnMouseDoubleClickHandler(object sender, MouseButtonEventArgs e)
         {
+            MessageBox.Show("Aufrufen eines Detail Dialog zur Bearbeitung","Eintrag bearbeiten",MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void OnCurrentListViewItemClick(object sender, RoutedEventArgs e)
@@ -352,19 +495,87 @@ namespace DataTableListView
             decimal aufwandMid = this.CurrentSelectedItem.GetField<decimal>("AufwandMid");
             decimal aufwandMin = this.CurrentSelectedItem.GetField<decimal>("AufwandMin");
             bool aktiv = this.CurrentSelectedItem.GetField<bool>("Aktiv");
+            int aktionId = this.CurrentSelectedItem.GetField<int>("AktionId");
 
             DataTable modifiedTables = this.CurrentSelectedItem.Table.GetChanges(DataRowState.Modified);
             if (modifiedTables != null)
             {
                 string msgText = $"Anzahl geänderte Datensätze: {modifiedTables.Rows.Count}";
                 MessageBox.Show(msgText, "Speichern", MessageBoxButton.OK, MessageBoxImage.Information);
+
+
+
+                this.LoadDataHandler(true);
             }
         }
 
         private void OnUndoRow(object sender, RoutedEventArgs e)
         {
-            this.CurrentSelectedItem.Table.RejectChanges();
-            this.LoadDataHandler(true);
+            if (this.CurrentSelectedItem != null)
+            {
+                this.CurrentSelectedItem.Table.RejectChanges();
+                this.LoadDataHandler(true);
+            }
+        }
+
+        private void OnCreateGroup(object sender, RoutedEventArgs e)
+        {
+            if ((Button)sender != null && ((Button)sender).Name == "BtnCreateGroup")
+            {
+                this.ListViewSource.GroupDescriptions.Clear();
+                if (string.IsNullOrEmpty(this.SelectedColumnGroup) == false)
+                {
+                    this.ListViewSource.GroupDescriptions.Add(new PropertyGroupDescription($"[{this.SelectedColumnGroup}]"));
+                    this.ListViewSource.Refresh();
+                }
+            }
+            else if ((Button)sender != null && ((Button)sender).Name == "BtnClearGroup")
+            {
+                this.SelectedColumnGroup = string.Empty;
+                this.ListViewSource.GroupDescriptions.Clear();
+                this.ListViewSource.Refresh();
+            }
+        }
+
+        private void OnCreateSearch(object sender, RoutedEventArgs e)
+        {
+            if ((Button)sender != null && ((Button)sender).Name == "BtnCreateSearch")
+            {
+                this.ListViewSource.Filter = rowItem =>
+                {
+                    DataRow row = rowItem as DataRow;
+                    if (row == null)
+                    {
+                        return false;
+                    }
+
+                    string rowContent = row[this.SelectedColumnSearch].ToString().ToLower(CultureInfo.CurrentCulture);
+
+                    return rowContent.Contains(this.FilterColumnSearch.ToLower(CultureInfo.CurrentCulture),StringComparison.CurrentCultureIgnoreCase) == true;
+                };
+
+                this.ListViewSource.Refresh();
+                this.DisplayRowCount = this.ListViewSource.Cast<DataRow>().Count();
+
+                if (this.DisplayRowCount == 0)
+                {
+                    this.NotifyMessage = $"Bereit: Kein Datensatz";
+                }
+                else if (this.DisplayRowCount == 1)
+                {
+                    this.NotifyMessage = $"Bereit: {this.DisplayRowCount} Datensatz";
+                }
+                else if (this.DisplayRowCount > 1)
+                {
+                    this.NotifyMessage = $"Bereit: {this.DisplayRowCount} Datensätze";
+                }
+            }
+            else if ((Button)sender != null && ((Button)sender).Name == "BtnClearSearch")
+            {
+                this.SelectedColumnSearch = string.Empty;
+                this.FilterColumnSearch = string.Empty;
+                this.LoadDataHandler(true);
+            }
         }
 
         #region INotifyPropertyChanged implementierung

@@ -74,6 +74,37 @@
         </DrawingImage.Drawing>
     </DrawingImage>
 
+    <DrawingImage x:Key="IconCreateGroup">
+        <DrawingImage.Drawing>
+            <GeometryDrawing Brush="Blue" Geometry="M1,1V5H2V19H1V23H5V22H19V23H23V19H22V5H23V1H19V2H5V1M5,4H19V5H20V19H19V20H5V19H4V5H5M6,6V14H9V18H18V9H14V6M8,8H12V12H8M14,11H16V16H11V14H14" />
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <DrawingImage x:Key="IconClearGroup">
+        <DrawingImage.Drawing>
+            <GeometryDrawing Brush="Red" Geometry="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <DrawingImage x:Key="IconCreateSearch">
+        <DrawingImage.Drawing>
+            <GeometryDrawing Brush="Blue" Geometry="M15.5,2C13,2 11,4 11,6.5C11,9 13,11 15.5,11C16.4,11 17.2,10.7 17.9,10.3L21,13.4L22.4,12L19.3,8.9C19.7,8.2 20,7.4 20,6.5C20,4 18,2 15.5,2M4,4A2,2 0 0,0 2,6V20A2,2 0 0,0 4,22H18A2,2 0 0,0 20,20V15L18,13V20H4V6H9.03C9.09,5.3 9.26,4.65 9.5,4H4M15.5,4C16.9,4 18,5.1 18,6.5C18,7.9 16.9,9 15.5,9C14.1,9 13,7.9 13,6.5C13,5.1 14.1,4 15.5,4Z" />
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <DrawingImage x:Key="IconClearSearch">
+        <DrawingImage.Drawing>
+            <GeometryDrawing Brush="Red" Geometry="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <Canvas
+        x:Key="MenuEditRow"
+        Width="24"
+        Height="24">
+        <Path Data="M10 20H6V4H13V9H18V12.1L20 10.1V8L14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H10V20M20.2 13C20.3 13 20.5 13.1 20.6 13.2L21.9 14.5C22.1 14.7 22.1 15.1 21.9 15.3L20.9 16.3L18.8 14.2L19.8 13.2C19.9 13.1 20 13 20.2 13M20.2 16.9L14.1 23H12V20.9L18.1 14.8L20.2 16.9Z" Fill="Green" />
+    </Canvas>
+
     <!--#region Statuszeile-->
     <Viewbox
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
