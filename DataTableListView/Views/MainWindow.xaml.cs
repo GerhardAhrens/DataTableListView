@@ -25,6 +25,7 @@ namespace DataTableListView
     using System.Windows.Input;
 
     using DataTableListView.Repository;
+    using DataTableListView.Views;
 
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -214,7 +215,6 @@ namespace DataTableListView
             WeakEventManager<Button, RoutedEventArgs>.AddHandler(this.BtnEditRow, "Click", this.OnEditRow);
             WeakEventManager<Button, RoutedEventArgs>.AddHandler(this.BtnSaveRow, "Click", this.OnSaveRow);
             WeakEventManager<Button, RoutedEventArgs>.AddHandler(this.BtnUndoRow, "Click", this.OnUndoRow);
-            WeakEventManager<MenuItem, RoutedEventArgs>.AddHandler(this.mnuCurrentRow, "Click", this.OnEditRow);
             WeakEventManager<Button, RoutedEventArgs>.AddHandler(this.BtnCreateGroup, "Click", this.OnCreateGroup);
             WeakEventManager<Button, RoutedEventArgs>.AddHandler(this.BtnClearGroup, "Click", this.OnCreateGroup);
             WeakEventManager<Button, RoutedEventArgs>.AddHandler(this.BtnCreateSearch, "Click", this.OnCreateSearch);
@@ -223,6 +223,8 @@ namespace DataTableListView
             WeakEventManager<Button, RoutedEventArgs>.AddHandler(this.BtnRowNext, "Click", this.OnRowNavigation);
             WeakEventManager<Button, RoutedEventArgs>.AddHandler(this.BtnRowPrevious, "Click", this.OnRowNavigation);
             WeakEventManager<Button, RoutedEventArgs>.AddHandler(this.BtnRowLast, "Click", this.OnRowNavigation);
+            WeakEventManager<MenuItem, RoutedEventArgs>.AddHandler(this.mnuCurrentEditRow, "Click", this.OnEditRow);
+            WeakEventManager<MenuItem, RoutedEventArgs>.AddHandler(this.mnuCurrentDeleteRow, "Click", this.OnDeleteRow);
 
             this.DataContext = this;
 
@@ -405,65 +407,43 @@ namespace DataTableListView
 
         private void OnNewRow(object sender, RoutedEventArgs e)
         {
-            using (DemoDataRepository repository = new DemoDataRepository())
-            {
-                DataRow dr = repository.NewDataRow();
-                dr.SetField<Guid>("Id", Guid.NewGuid());
-                dr.SetField<int>("Kapitel", 4);
-                dr.SetField<string>("KapitelTitel", "Test-Kapitel 4");
-                dr.SetField<string>("Titel", "Titelbeschreibung-4");
-                dr.SetField<string>("Beschreibung", string.Empty);
-                dr.SetField<decimal>("AufwandMax", 4.5m);
-                dr.SetField<decimal>("AufwandMid", 4.5m);
-                dr.SetField<decimal>("AufwandMin", 4.0m);
-                dr.SetField<bool>("Aktiv", true);
-                repository.Add(dr);
-                MessageBox.Show("Neuer Datensatz in Tabelle übernommen.", "Speichern", MessageBoxButton.OK, MessageBoxImage.Information);
+            EditDetailView editDetailView = new EditDetailView();
+            bool? dlgResult = editDetailView.ShowDialog();
 
-                this.LoadDataHandler(true);
+            if (dlgResult == true)
+            {
+                int rowPos = this.ListViewSource.CurrentPosition;
+                this.LoadDataHandler(false, rowPos);
             }
         }
 
         private void OnEditRow(object sender, RoutedEventArgs e)
         {
-            Guid id = this.CurrentSelectedItem.GetField<Guid>("Id");
-            int kapitel = this.CurrentSelectedItem.GetField<int>("Kapitel");
-            string kapitelTitel = this.CurrentSelectedItem.GetField<string>("KapitelTitel");
-            string titel = this.CurrentSelectedItem.GetField<string>("Titel");
-            string beschreibung = this.CurrentSelectedItem.GetField<string>("Beschreibung");
-            decimal aufwandMax = this.CurrentSelectedItem.GetField<decimal>("AufwandMax");
-            decimal aufwandMid = this.CurrentSelectedItem.GetField<decimal>("AufwandMid");
-            decimal aufwandMin = this.CurrentSelectedItem.GetField<decimal>("AufwandMin");
-            bool aktiv = this.CurrentSelectedItem.GetField<bool>("Aktiv");
-
-            aufwandMax = 3.5M;
-            aufwandMid = 3.0M;
-            aufwandMin = 2.5M;
-
             DataRow editRow = this.CurrentSelectedItem.Clone<DataRow>(this.CurrentSelectedItem.Table);
-            if (editRow != null)
-            {
-                using (DemoDataRepository repository = new DemoDataRepository())
-                {
-                    editRow.BeginEdit();
-                    editRow.SetField<decimal>("AufwandMax", aufwandMax);
-                    editRow.SetField<decimal>("AufwandMid", aufwandMid);
-                    editRow.SetField<decimal>("AufwandMin", aufwandMin);
-                    repository.Update(editRow);
-                    editRow.EndEdit();
-                    editRow.AcceptChanges();
-                }
-            }
+            EditDetailView editDetailView = new EditDetailView(editRow);
+            bool? dlgResult = editDetailView.ShowDialog();
 
-            int rowPos = this.ListViewSource.CurrentPosition;
-            this.LoadDataHandler(false, rowPos);
+            if (dlgResult == true)
+            {
+                int rowPos = this.ListViewSource.CurrentPosition;
+                this.LoadDataHandler(false, rowPos);
+            }
+        }
+
+        private void OnMouseDoubleClickHandler(object sender, MouseButtonEventArgs e)
+        {
+            if (e.LeftButton == MouseButtonState.Pressed)
+            {
+                this.OnEditRow(sender, e);
+            }
         }
 
         private void OnDeleteRow(object sender, RoutedEventArgs e)
         {
             if (this.CurrentSelectedItem != null)
             {
-                MessageBoxResult msgYN = MessageBox.Show("Wollen Sie den gewählten Datensatz löschen?", "Löschen Eintrag", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                string msgText = this.CurrentSelectedItem.GetField<int>("Kapitel").ToString(CultureInfo.CurrentCulture);
+                MessageBoxResult msgYN = MessageBox.Show($"Wollen Sie den gewählten Datensatz (Kapitel: {msgText}) löschen?", "Löschen Eintrag", MessageBoxButton.YesNo, MessageBoxImage.Question);
                 if (msgYN == MessageBoxResult.Yes)
                 {
                     using (DemoDataRepository repository = new DemoDataRepository())
@@ -475,15 +455,6 @@ namespace DataTableListView
                     this.LoadDataHandler(true);
                 }
             }
-        }
-
-        private void OnMouseDoubleClickHandler(object sender, MouseButtonEventArgs e)
-        {
-            MessageBox.Show("Aufrufen eines Detail Dialog zur Bearbeitung","Eintrag bearbeiten",MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
-        private void OnCurrentListViewItemClick(object sender, RoutedEventArgs e)
-        {
         }
 
         private void OnSaveRow(object sender, RoutedEventArgs e)

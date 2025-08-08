@@ -234,9 +234,13 @@
             <ListView.ContextMenu>
                 <ContextMenu>
                     <MenuItem
-                        x:Name="mnuCurrentRow"
+                        x:Name="mnuCurrentEditRow"
                         Header="Ändern"
                         Icon="{StaticResource ResourceKey=MenuEditRow}" />
+                    <MenuItem
+                        x:Name="mnuCurrentDeleteRow"
+                        Header="Löschen"
+                        Icon="{StaticResource ResourceKey=MenuDeleteRow}" />
                 </ContextMenu>
             </ListView.ContextMenu>
 

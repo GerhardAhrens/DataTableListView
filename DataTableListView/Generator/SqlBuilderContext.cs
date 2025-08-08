@@ -39,6 +39,21 @@ namespace DataTableListView.Generator
             this.TableName = dataTableName;
         }
 
+        public SqlBuilderContext(DataRow currentDataRow, SqlBuilderOptions sqlBuilderOptions)
+        {
+            this.CurrentDataRow = currentDataRow;
+
+            ArgumentNullException.ThrowIfNull(sqlBuilderOptions,nameof(sqlBuilderOptions));
+
+            this.TableName = sqlBuilderOptions.TableName;
+            this.CurrentUser = sqlBuilderOptions.CurrentUser;
+            this.KeyColumn = sqlBuilderOptions.KeyColumn;
+            this.CreateByColumn = sqlBuilderOptions.CreateByColumn;
+            this.CreateOnColumn = sqlBuilderOptions.CreateOnColumn;
+            this.ModifyByColumn = sqlBuilderOptions.ModifyByColumn;
+            this.ModifyOnColumn = sqlBuilderOptions.ModifyOnColumn;
+        }
+
         public SqlBuilderContext(DataRow currentDataRow)
         {
             this.CurrentDataRow = currentDataRow;
@@ -57,7 +72,6 @@ namespace DataTableListView.Generator
         public string CreateOnColumn { get; set; } = "CreatedOn";
         public string ModifyByColumn { get; set; } = "ModifiedBy";
         public string ModifyOnColumn { get; set; } = "ModifiedOn";
-
         public string TableName { get; set; }
 
         /// <summary>
@@ -306,5 +320,20 @@ namespace DataTableListView.Generator
             this.classIsDisposed = true;
         }
         #endregion Dispose Function
+    }
+
+    public sealed class SqlBuilderOptions
+    {
+        public SqlBuilderOptions()
+        {
+        }
+
+        public string CurrentUser { get; set; } = Environment.UserName;
+        public string[] KeyColumn { get; set; } = { "Id" };
+        public string CreateByColumn { get; set; } = "CreatedBy";
+        public string CreateOnColumn { get; set; } = "CreatedOn";
+        public string ModifyByColumn { get; set; } = "ModifiedBy";
+        public string ModifyOnColumn { get; set; } = "ModifiedOn";
+        public string TableName { get; set; }
     }
 }

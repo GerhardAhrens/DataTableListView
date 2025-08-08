@@ -136,7 +136,7 @@ namespace System.Data
         {
             bool result = false;
 
-            int columnFound = @this.Table.Columns.OfType<DataColumn>().ToList().Count(c => c.ColumnName.ToLower() == columnName.ToLower());
+            int columnFound = @this.Table.Columns.OfType<DataColumn>().ToList().Count(c => c.ColumnName.Equals(columnName, StringComparison.OrdinalIgnoreCase));
             if (columnFound > 0)
             {
                 result = true;

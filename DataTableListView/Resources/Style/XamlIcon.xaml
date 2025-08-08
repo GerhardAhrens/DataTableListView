@@ -106,6 +106,13 @@
         <Path Data="M10 20H6V4H13V9H18V12.1L20 10.1V8L14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H10V20M20.2 13C20.3 13 20.5 13.1 20.6 13.2L21.9 14.5C22.1 14.7 22.1 15.1 21.9 15.3L20.9 16.3L18.8 14.2L19.8 13.2C19.9 13.1 20 13 20.2 13M20.2 16.9L14.1 23H12V20.9L18.1 14.8L20.2 16.9Z" Fill="Green" />
     </Canvas>
 
+    <Canvas
+        x:Key="MenuDeleteRow"
+        Width="24"
+        Height="24">
+        <Path Data="M9,3V4H4V6H5V19A2,2 0 0,0 7,21H17A2,2 0 0,0 19,19V6H20V4H15V3H9M7,6H17V19H7V6M9,8V17H11V8H9M13,8V17H15V8H13Z" Fill="Red" />
+    </Canvas>
+
     <!--  ListView Row Navigation  -->
     <DrawingImage x:Key="IconFirstRow">
         <DrawingImage.Drawing>
@@ -131,6 +138,14 @@
         </DrawingImage.Drawing>
     </DrawingImage>
 
+    <!--#region Dialog Icon -->
+    <DrawingImage x:Key="IconDemoDetailDialog">
+        <DrawingImage.Drawing>
+            <GeometryDrawing Brush="Black" Geometry="M21 2H3C1.9 2 1 2.9 1 4V16C1 17.11 1.9 18 3 18H10V20H8V22H16V20H14V18H21C22.11 18 23 17.11 23 16V4C23 2.9 22.11 2 21 2M21 16H3V4H21V16M15.84 8.2L14.83 9.21L12.76 7.18L13.77 6.16C13.97 5.95 14.31 5.94 14.55 6.16L15.84 7.41C16.05 7.62 16.06 7.96 15.84 8.2M8 11.91L12.17 7.72L14.24 9.8L10.08 14H8V11.91Z" />
+        </DrawingImage.Drawing>
+    </DrawingImage>
+    <!--#endregion Dialog Icon -->
+    
     <!--#region Statuszeile-->
     <Viewbox
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
