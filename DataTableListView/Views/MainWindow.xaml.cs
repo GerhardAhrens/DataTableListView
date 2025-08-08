@@ -24,6 +24,7 @@ namespace DataTableListView
     using System.Windows.Data;
     using System.Windows.Input;
 
+    using DataTableListView.Core;
     using DataTableListView.Repository;
     using DataTableListView.Views;
 
@@ -285,18 +286,7 @@ namespace DataTableListView
                             WeakEventManager<DataTable, DataRowChangeEventArgs>.AddHandler(this.CurrentSelectedItem.Table, "RowChanged", this.OnRowChanged);
                         }
 
-                        if (this.DisplayRowCount == 0)
-                        {
-                            this.NotifyMessage = $"Bereit: Kein Datensatz";
-                        }
-                        else if (this.DisplayRowCount == 1)
-                        {
-                            this.NotifyMessage = $"Bereit: {this.DisplayRowCount} Datensatz";
-                        }
-                        else if (this.DisplayRowCount > 1)
-                        {
-                            this.NotifyMessage = $"Bereit: {this.DisplayRowCount} Datensätze";
-                        }
+                        this.NotifyMessage = Humanizer.Get("Bereit: [ein/{0}/keine] [Datensatz/Datensätze]", this.DisplayRowCount);
                     }
                 }
             }
@@ -344,18 +334,8 @@ namespace DataTableListView
             }
 
             int modifiedCount = e.Row.Table.GetChanges(DataRowState.Modified).Rows.Count;
-            if (modifiedCount == 0)
-            {
-                this.NotifyMessage = $"Bereit: Kein Datensatz geändert";
-            }
-            else if (modifiedCount == 1)
-            {
-                this.NotifyMessage = $"Bereit: {modifiedCount} Datensatz geändert";
-            }
-            else if (modifiedCount > 1)
-            {
-                this.NotifyMessage = $"Bereit: {modifiedCount} Datensätze geändert";
-            }
+
+            this.NotifyMessage = Humanizer.Get("[ein/{0}/keine] [Datensatz/Datensätze] geändert", modifiedCount);
         }
 
         private bool DataDefaultFilter(DataRow rowItem)

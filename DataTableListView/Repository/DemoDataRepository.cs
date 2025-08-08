@@ -28,7 +28,7 @@ namespace DataTableListView.Repository
     using System.Data;
     using System.Data.SQLite;
 
-    using DataTableListView.Core;
+    using DataTableListView.DataFunction;
     using DataTableListView.Generator;
 
     public class DemoDataRepository : SQLiteDBContext

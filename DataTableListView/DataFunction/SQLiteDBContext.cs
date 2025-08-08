@@ -22,7 +22,7 @@
  * If not, see <http://www.gnu.org/licenses/>.
 */
 
-namespace DataTableListView.Core
+namespace DataTableListView.DataFunction
 {
     using System;
     using System.Data;
