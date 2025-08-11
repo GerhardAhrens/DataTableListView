@@ -11,12 +11,16 @@
     using DataTableListView.Core;
     using DataTableListView.Repository;
 
+    using static System.Runtime.InteropServices.JavaScript.JSType;
+
     /// <summary>
     /// Interaktionslogik für EditDetailView.xaml
     /// </summary>
     public partial class EditDetailView : Window, INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
+        private Dictionary<string, Func<Result<string>>> ValidationRules;
+        private Dictionary<string, string> errors = new Dictionary<string, string>();
         private string _WindowTitel;
         private DataRow _OriginalRow;
         private DataRow _CurrentRow;
@@ -28,6 +32,7 @@
             WeakEventManager<Window, RoutedEventArgs>.AddHandler(this, "Loaded", this.OnLoaded);
             WeakEventManager<Window, CancelEventArgs>.AddHandler(this, "Closing", this.OnWindowClosing);
 
+            this.ValidationRules = new Dictionary<string, Func<Result<string>>>();
             this.RowAction = rowAction;
             this.WindowTitel = "Neuer Eintrag erstellen";
             this.CurrentRow = null;
@@ -39,6 +44,7 @@
             WeakEventManager<Window, RoutedEventArgs>.AddHandler(this, "Loaded", this.OnLoaded);
             WeakEventManager<Window, CancelEventArgs>.AddHandler(this, "Closing", this.OnWindowClosing);
 
+            this.ValidationRules = new Dictionary<string, Func<Result<string>>>();
             this.RowAction = rowAction;
             if (currentRow != null && rowAction == RowNextAction.UpdateRow)
             {
@@ -119,7 +125,7 @@
             Keyboard.Focus(this);
             WeakEventManager<Button, RoutedEventArgs>.AddHandler(this.BtnCloseDialog, "Click", this.OnCloseDialog);
             WeakEventManager<Button, RoutedEventArgs>.AddHandler(this.BtnSaveRow, "Click", this.OnSaveRow);
-
+            this.RegisterValidations();
             this.DataContext = this;
 
             this.LoadDataHandler();
@@ -164,6 +170,15 @@
         {
             this.StatusLineA.Text = "Geändert";
             this.IsColumnModified = true;
+
+            Func<Result<string>> function = null;
+            if (this.ValidationRules.TryGetValue(e.Column.ColumnName, out function) == true)
+            {
+                Result<string> ruleText = this.DoValidation(function, e.Column.ColumnName);
+                if (string.IsNullOrEmpty(ruleText.Value) == false)
+                {
+                }
+            }
         }
 
         private void OnCloseDialog(object sender, RoutedEventArgs e)
@@ -188,7 +203,6 @@
                 }
             }
         }
-
 
         private void OnSaveRow(object sender, RoutedEventArgs e)
         {
@@ -290,6 +304,39 @@
             return result;
         }
 
+        #region Register Validations
+        private void RegisterValidations()
+        {
+            this.ValidationRules.Add("Kapitel", () =>
+            {
+                return InputValidation<DataRow>.This(this.CurrentRow).GreaterThanZero("Kapitel");
+            });
+
+            this.ValidationRules.Add("KapitelTitel", () =>
+            {
+                return InputValidation<DataRow>.This(this.CurrentRow).NotEmpty("KapitelTitel");
+            });
+        }
+
+        private Result<string> DoValidation(Func<Result<string>> validationFunc, string propName)
+        {
+            Result<string> result = validationFunc.Invoke();
+
+            if (errors.ContainsKey(propName) == true)
+            {
+                errors.Remove(propName);
+            }
+            else
+            {
+                if (string.IsNullOrEmpty(result.SuccessMessage) == false)
+                {
+                    errors[propName] = result.SuccessMessage;
+                }
+            }
+
+            return result;
+        }
+        #endregion Register Validations
 
         #region INotifyPropertyChanged implementierung
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = "")

@@ -1,0 +1,7 @@
+﻿[*.cs]
+
+# CA1000: Statische Member nicht in generischen Typen deklarieren
+dotnet_diagnostic.CA1000.severity = none
+
+# CA1822: Member als statisch markieren
+dotnet_diagnostic.CA1822.severity = suggestion
