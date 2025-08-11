@@ -154,6 +154,51 @@ namespace DataTableListView.DataFunction
             return false;
         }
 
+        public DataTable Tables()
+        {
+            DataTable tables = null;
+
+            try
+            {
+                using (SQLiteConnection sqliteConnection = new SQLiteConnection(this.ConnectString))
+                {
+                    tables = new DataTable("Schema");
+
+                    if (sqliteConnection.State != ConnectionState.Open)
+                    {
+                        sqliteConnection.Open();
+                        this.ConnectionState = sqliteConnection.State;
+
+                        tables = sqliteConnection.GetSchema(SQLiteTableSchema.Columns.ToString());
+                        tables.Columns.Remove("TABLE_CATALOG");
+                        tables.Columns.Remove("TABLE_SCHEMA");
+                        tables.Columns.Remove("COLUMN_GUID");
+                        tables.Columns.Remove("COLUMN_PROPID");
+                        tables.Columns.Remove("COLUMN_HASDEFAULT");
+                        tables.Columns.Remove("COLUMN_DEFAULT");
+                        tables.Columns.Remove("COLUMN_FLAGS");
+                        tables.Columns.Remove("TYPE_GUID");
+                        tables.Columns.Remove("CHARACTER_MAXIMUM_LENGTH");
+                        tables.Columns.Remove("CHARACTER_SET_CATALOG");
+                        tables.Columns.Remove("CHARACTER_SET_SCHEMA");
+                        tables.Columns.Remove("CHARACTER_SET_NAME");
+                        tables.Columns.Remove("COLLATION_CATALOG");
+                        tables.Columns.Remove("COLLATION_NAME");
+                        tables.Columns.Remove("DOMAIN_CATALOG");
+                        tables.Columns.Remove("DOMAIN_NAME");
+                    }
+
+                    sqliteConnection.Close();
+                }
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+
+            return tables;
+        }
+
         public void Vacuum()
         {
             using (SQLiteConnection sqliteConnection = new SQLiteConnection(this.ConnectString))
@@ -196,49 +241,7 @@ namespace DataTableListView.DataFunction
             return result;
         }
 
-        public DataTable Tables()
-        {
-            DataTable tables = null;
-
-            try
-            {
-                using (SQLiteConnection sqliteConnection = new SQLiteConnection(this.ConnectString))
-                {
-                    tables = new DataTable("Schema");
-
-                    if (sqliteConnection.State != ConnectionState.Open)
-                    {
-                        sqliteConnection.Open();
-                        this.ConnectionState = sqliteConnection.State;
-
-                        tables = sqliteConnection.GetSchema(SQLiteTableSchema.Columns.ToString());
-                        tables.Columns.Remove("TABLE_CATALOG");
-                        tables.Columns.Remove("TABLE_SCHEMA");
-                        tables.Columns.Remove("COLUMN_GUID");
-                        tables.Columns.Remove("COLUMN_PROPID");
-                        tables.Columns.Remove("COLUMN_HASDEFAULT");
-                        tables.Columns.Remove("COLUMN_DEFAULT");
-                        tables.Columns.Remove("COLUMN_FLAGS");
-                        tables.Columns.Remove("TYPE_GUID");
-                        tables.Columns.Remove("CHARACTER_MAXIMUM_LENGTH");
-                        tables.Columns.Remove("CHARACTER_SET_CATALOG");
-                        tables.Columns.Remove("CHARACTER_SET_SCHEMA");
-                        tables.Columns.Remove("CHARACTER_SET_NAME");
-                        tables.Columns.Remove("COLLATION_CATALOG");
-                        tables.Columns.Remove("COLLATION_NAME");
-                        tables.Columns.Remove("DOMAIN_CATALOG");
-                        tables.Columns.Remove("DOMAIN_NAME");
-                    }
-                }
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-
-            return tables;
-        }
-
+        #region Funktionen zur Datenbank
         public bool Exist()
         {
             if (File.Exists(this.DatabaseFullName) == true)
@@ -296,6 +299,7 @@ namespace DataTableListView.DataFunction
 
             return result;
         }
+        #endregion Funktionen zur Datenbank
 
         private void CreateConnection(string connectionString)
         {
@@ -321,17 +325,17 @@ namespace DataTableListView.DataFunction
             }
         }
 
-        private static string ConnectStringToText(string databasePath)
+        private static string ConnectStringToText(string databasePath,int defaultTimeout = 15, bool isReadOnly = false)
         {
             SQLiteConnectionStringBuilder conString = new SQLiteConnectionStringBuilder();
             conString.DataSource = databasePath;
-            conString.DefaultTimeout = 15;
+            conString.DefaultTimeout = defaultTimeout;
             conString.SyncMode = SynchronizationModes.Off;
             conString.JournalMode = SQLiteJournalModeEnum.Memory;
             conString.PageSize = 65536;
             conString.CacheSize = 16777216;
             conString.FailIfMissing = false;
-            conString.ReadOnly = false;
+            conString.ReadOnly = isReadOnly;
             conString.Version = 3;
             conString.UseUTF16Encoding = true;
 
