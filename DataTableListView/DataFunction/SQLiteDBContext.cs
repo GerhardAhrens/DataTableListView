@@ -37,7 +37,8 @@ namespace DataTableListView.DataFunction
         {
             if (File.Exists(App.DatabasePath) == true)
             {
-                this.ConnectString = ConnectStringToText(App.DatabasePath);
+                this.DatabaseFullName = App.DatabasePath;
+                this.ConnectString = ConnectStringToText(this.DatabaseFullName);
                 this.CreateConnection(ConnectString);
             }
             else
@@ -53,7 +54,8 @@ namespace DataTableListView.DataFunction
         {
             if (File.Exists(databaseName) == true)
             {
-                this.ConnectString = ConnectStringToText(databaseName);
+                this.DatabaseFullName = databaseName;
+                this.ConnectString = ConnectStringToText(this.DatabaseFullName);
                 this.CreateConnection(ConnectString);
             }
             else
@@ -67,6 +69,233 @@ namespace DataTableListView.DataFunction
         public SQLiteConnection Connection { get; private set; }
 
         public ConnectionState ConnectionState { get; private set; }
+
+        private string DatabaseFullName { get; set; }
+
+        public void Create(Action<SQLiteConnection> actionMethod)
+        {
+            try
+            {
+                if (File.Exists(this.DatabaseFullName) == false)
+                {
+                    SQLiteConnection.CreateFile(this.DatabaseFullName);
+
+                    using (SQLiteConnection sqliteConnection = new SQLiteConnection(this.ConnectString))
+                    {
+                        if (sqliteConnection.State != ConnectionState.Open)
+                        {
+                            sqliteConnection.Open();
+                            this.ConnectionState = sqliteConnection.State;
+                        }
+
+                        if (actionMethod != null)
+                        {
+                            actionMethod?.Invoke(sqliteConnection);
+                        }
+
+                        sqliteConnection.Close();
+                    }
+                }
+                else
+                {
+                    using (SQLiteConnection sqliteConnection = new SQLiteConnection(this.ConnectString))
+                    {
+                        if (sqliteConnection.State != ConnectionState.Open)
+                        {
+                            sqliteConnection.Open();
+                            this.ConnectionState = sqliteConnection.State;
+                        }
+
+                        if (actionMethod != null)
+                        {
+                            actionMethod?.Invoke(sqliteConnection);
+                        }
+
+                        sqliteConnection.Close();
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        public bool CheckIfColumnExists(string tableName, string columnName)
+        {
+            try
+            {
+                using (SQLiteConnection sqliteConnection = new SQLiteConnection(this.ConnectString))
+                {
+                    sqliteConnection.Open();
+                    this.ConnectionState = sqliteConnection.State;
+                    var cmd = sqliteConnection.CreateCommand();
+                    cmd.CommandText = $"PRAGMA table_info({tableName})";
+
+                    SQLiteDataReader reader = cmd.ExecuteReader();
+                    int nameIndex = reader.GetOrdinal("Name");
+                    while (reader.Read())
+                    {
+                        if (reader.GetString(nameIndex).Equals(columnName,StringComparison.OrdinalIgnoreCase))
+                        {
+                            return true;
+                        }
+                    }
+
+                    sqliteConnection.Close();
+                }
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+
+            return false;
+        }
+
+        public void Vacuum()
+        {
+            using (SQLiteConnection sqliteConnection = new SQLiteConnection(this.ConnectString))
+            {
+                if (sqliteConnection.State != ConnectionState.Open)
+                {
+                    sqliteConnection.Open();
+                    this.ConnectionState = sqliteConnection.State;
+
+                    using (SQLiteCommand cmd = new SQLiteCommand("vacuum", sqliteConnection))
+                    {
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+
+                sqliteConnection.Close();
+            }
+        }
+
+        public string Version()
+        {
+            string result = string.Empty;
+
+            using (SQLiteConnection sqliteConnection = new SQLiteConnection(this.ConnectString))
+            {
+                if (sqliteConnection.State != ConnectionState.Open)
+                {
+                    sqliteConnection.Open();
+                    this.ConnectionState = sqliteConnection.State;
+
+                    using (SQLiteCommand cmd = new SQLiteCommand("SELECT SQLITE_VERSION()", sqliteConnection))
+                    {
+                        result = cmd.ExecuteScalar().ToString();
+                    }
+                }
+
+                sqliteConnection.Close();
+            }
+
+            return result;
+        }
+
+        public DataTable Tables()
+        {
+            DataTable tables = null;
+
+            try
+            {
+                using (SQLiteConnection sqliteConnection = new SQLiteConnection(this.ConnectString))
+                {
+                    tables = new DataTable("Schema");
+
+                    if (sqliteConnection.State != ConnectionState.Open)
+                    {
+                        sqliteConnection.Open();
+                        this.ConnectionState = sqliteConnection.State;
+
+                        tables = sqliteConnection.GetSchema(SQLiteTableSchema.Columns.ToString());
+                        tables.Columns.Remove("TABLE_CATALOG");
+                        tables.Columns.Remove("TABLE_SCHEMA");
+                        tables.Columns.Remove("COLUMN_GUID");
+                        tables.Columns.Remove("COLUMN_PROPID");
+                        tables.Columns.Remove("COLUMN_HASDEFAULT");
+                        tables.Columns.Remove("COLUMN_DEFAULT");
+                        tables.Columns.Remove("COLUMN_FLAGS");
+                        tables.Columns.Remove("TYPE_GUID");
+                        tables.Columns.Remove("CHARACTER_MAXIMUM_LENGTH");
+                        tables.Columns.Remove("CHARACTER_SET_CATALOG");
+                        tables.Columns.Remove("CHARACTER_SET_SCHEMA");
+                        tables.Columns.Remove("CHARACTER_SET_NAME");
+                        tables.Columns.Remove("COLLATION_CATALOG");
+                        tables.Columns.Remove("COLLATION_NAME");
+                        tables.Columns.Remove("DOMAIN_CATALOG");
+                        tables.Columns.Remove("DOMAIN_NAME");
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+
+            return tables;
+        }
+
+        public bool Exist()
+        {
+            if (File.Exists(this.DatabaseFullName) == true)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public long Length()
+        {
+            long result = 0;
+
+            try
+            {
+                if (File.Exists(this.DatabaseFullName) == true)
+                {
+                    FileInfo fi = new FileInfo(this.DatabaseFullName);
+                    result = fi.Length;
+                }
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+
+            return result;
+        }
+
+        public DateTime LastWriteTime()
+        {
+            DateTime result = new DateTime(1900, 1, 1);
+
+            if (File.Exists(this.DatabaseFullName) == true)
+            {
+                FileInfo fi = new FileInfo(this.DatabaseFullName);
+                result = fi.LastWriteTime;
+            }
+
+            return result;
+        }
+
+        public DateTime CreationTime()
+        {
+            DateTime result = new DateTime(1900, 1, 1);
+
+            if (File.Exists(this.DatabaseFullName) == true)
+            {
+                FileInfo fi = new FileInfo(this.DatabaseFullName);
+                result = fi.CreationTime;
+            }
+
+            return result;
+        }
 
         private void CreateConnection(string connectionString)
         {
@@ -131,5 +360,23 @@ namespace DataTableListView.DataFunction
         }
 
         #endregion Implement Dispose
+    }
+
+    public enum SQLiteTableSchema
+    {
+        None = 0,
+        MetaDataCollections = 1,
+        DataSourceInformation = 2,
+        DataTypes = 3,
+        ReservedWords = 4,
+        Catalogs = 5,
+        Columns = 6,
+        Indexes = 7,
+        IndexColumns = 8,
+        Tables = 9,
+        Views = 10,
+        ViewColumns = 11,
+        ForeignKeys = 12,
+        Triggers = 13
     }
 }

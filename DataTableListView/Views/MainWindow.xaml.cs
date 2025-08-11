@@ -18,6 +18,7 @@ namespace DataTableListView
     using System.Collections.ObjectModel;
     using System.ComponentModel;
     using System.Data;
+    using System.Data.SQLite;
     using System.Globalization;
     using System.Runtime.CompilerServices;
     using System.Windows;
@@ -26,6 +27,7 @@ namespace DataTableListView
     using System.Windows.Input;
 
     using DataTableListView.Core;
+    using DataTableListView.DataFunction;
     using DataTableListView.Repository;
     using DataTableListView.Views;
 
@@ -252,6 +254,11 @@ namespace DataTableListView
         {
             this.Focus();
             Keyboard.Focus(this);
+
+            using (SQLiteDBContext dbcontext = new SQLiteDBContext())
+            {
+                dbcontext.Create(this.CreateTableInDB);
+            }
 
             WeakEventManager<Button, RoutedEventArgs>.AddHandler(this.BtnCloseApplication, "Click", this.OnCloseApplication);
             WeakEventManager<Button, RoutedEventArgs>.AddHandler(this.BtnNewRow, "Click", this.OnNewRow);
@@ -649,6 +656,12 @@ namespace DataTableListView
             {
                 this.ListViewSource.MoveCurrentToLast();
             }
+        }
+
+        private void CreateTableInDB(SQLiteConnection sqliteConnection)
+        {
+            string sqlText = "CREATE TABLE IF NOT EXISTS TAB_Contact (Id VARCHAR(36),nName VARCHAR(50),Age Integer,Birthday DateTime, PRIMARY KEY (Id))";
+            sqliteConnection.RecordSet<int>(sqlText).Execute();
         }
 
         #region INotifyPropertyChanged implementierung
