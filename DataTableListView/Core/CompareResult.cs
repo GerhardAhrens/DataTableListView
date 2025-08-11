@@ -18,6 +18,7 @@ namespace DataTableListView.Comparer
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
     using System.Diagnostics;
+    using System.Globalization;
 
     [DebuggerStepThrough]
     [Serializable]
@@ -52,7 +53,7 @@ namespace DataTableListView.Comparer
 
         public string FullName
         {
-            get { return $"{this.ObjectName}.({this.PropertyTyp}){this.PropertyName}; CurrentValue={this.NullToString(this.FirstValue)}; OldValue={this.NullToString(this.SecondValue)}"; }
+            get { return $"{this.ObjectName}.({this.PropertyTyp}){this.PropertyName}; CurrentValue={NullToString(this.FirstValue)}; OldValue={NullToString(this.SecondValue)}"; }
         }
 
         public string ShortText
@@ -77,7 +78,7 @@ namespace DataTableListView.Comparer
                     op = "!=";
                 }
 
-                string result = $"[{this.PropertyName.PadRight(20)}] : {this.NullToString(this.FirstValue)} {op} {this.NullToString(this.SecondValue)}";
+                string result = $"[{this.PropertyName.PadRight(20)}] : {NullToString(this.FirstValue)} {op} {NullToString(this.SecondValue)}";
                 return result;
             }
         }
@@ -106,7 +107,7 @@ namespace DataTableListView.Comparer
             return result;
         }
 
-        private string NullToString(object value)
+        private static string NullToString(object value)
         {
             try
             {
@@ -162,7 +163,7 @@ namespace DataTableListView.Comparer
                 }
                 else if (value != null && value.GetType().IsEnum == true)
                 {
-                    int enumValue = Convert.ToInt32(value);
+                    int enumValue = Convert.ToInt32(value,CultureInfo.CurrentCulture);
                     string propertyContent = $"Enum.{value.GetType().Name}={value}[{enumValue}]";
                     return propertyContent;
                 }

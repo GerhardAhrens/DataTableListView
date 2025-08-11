@@ -15,6 +15,7 @@
 
 namespace DataTableListView
 {
+    using System.Collections.ObjectModel;
     using System.ComponentModel;
     using System.Data;
     using System.Globalization;
@@ -41,11 +42,13 @@ namespace DataTableListView
         private ICollectionView _ListViewSource;
         private ICollectionView _AktionSource;
         private DataRow _CurrentSelectedItem;
+        private DataRow[] _CurrentSelectedItems;
         private int _DisplayRowCount;
         private string _NotifyMessage;
         private IEnumerable<string> _ColumnsSource;
         private string _SelectedColumnGroup;
         private decimal _SummeMax;
+        private decimal _DynamicSum;
 
         public MainWindow()
         {
@@ -138,6 +141,19 @@ namespace DataTableListView
             }
         }
 
+        public DataRow[] CurrentSelectedItems
+        {
+            get { return _CurrentSelectedItems; }
+            set
+            {
+                if (this._CurrentSelectedItems != value)
+                {
+                    this._CurrentSelectedItems = value;
+                    this.OnPropertyChanged();
+                }
+            }
+        }
+
         public int DisplayRowCount
         {
             get { return _DisplayRowCount; }
@@ -211,6 +227,19 @@ namespace DataTableListView
                 if (this._SummeMax != value)
                 {
                     this._SummeMax = value;
+                    this.OnPropertyChanged();
+                }
+            }
+        }
+
+        public decimal DynamicSum
+        {
+            get { return _DynamicSum; }
+            set
+            {
+                if (this.DynamicSum != value)
+                {
+                    this._DynamicSum = value;
                     this.OnPropertyChanged();
                 }
             }
@@ -300,7 +329,7 @@ namespace DataTableListView
                             this.ListViewSource.Cast<DataRow>().First().Table.AcceptChanges();
                             WeakEventManager<DataTable, DataRowChangeEventArgs>.RemoveHandler(this.CurrentSelectedItem.Table, "RowChanged", this.OnRowChanged);
                             WeakEventManager<DataTable, DataRowChangeEventArgs>.AddHandler(this.CurrentSelectedItem.Table, "RowChanged", this.OnRowChanged);
-
+                            WeakEventManager<ListView, SelectionChangedEventArgs>.AddHandler(this.LvwRoot, "SelectionChanged", this.OnSelectionChanged);                            
                             this.SummeMax = this.ListViewSource.Cast<DataRow>().Sum<DataRow>(s => s.GetField<decimal>("AufwandMax"));
                         }
 
@@ -312,6 +341,26 @@ namespace DataTableListView
             {
                 string errorText = ex.Message;
                 throw;
+            }
+        }
+
+        private void OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (this.DisplayRowCount > 0)
+            {
+                IEnumerable<DataRow> itemsCollection = this.LvwRoot.SelectedItems.Cast<DataRow>();
+                if (itemsCollection.Any() == false)
+                {
+                    this.DynamicSum = 0;
+                }
+                else if (itemsCollection.Count() == 1)
+                {
+                    this.DynamicSum = itemsCollection.Sum<DataRow>(s => s.GetField<decimal>("AufwandMax"));
+                }
+                else if (itemsCollection.Count() > 1)
+                {
+                    this.DynamicSum = itemsCollection.Sum<DataRow>(s => s.GetField<decimal>("AufwandMax"));
+                }
             }
         }
 

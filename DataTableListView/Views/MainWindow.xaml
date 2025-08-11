@@ -8,7 +8,7 @@
     xmlns:local="clr-namespace:DataTableListView"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title="{Binding Path=WindowTitel, FallbackValue=~WindowTitel}"
-    Width="1050"
+    Width="1060"
     Height="600"
     mc:Ignorable="d">
     <Window.Icon>
@@ -205,14 +205,16 @@
                 </StackPanel>
             </GroupBox>
 
-            <GroupBox
-                Width="200"
-                Margin="10,0,0,0"
-                Header="Summen">
+            <GroupBox Margin="10,0,0,0" Header="Summen">
                 <StackPanel Margin="0,5,0,0" Orientation="Horizontal">
-                    <TextBlock>
+                    <TextBlock Width="110">
                         <Run Text="Summe Max:" />
                         <Run Text="{Binding Path=SummeMax, StringFormat=N2}" />
+                    </TextBlock>
+
+                    <TextBlock Width="150" Margin="5,0,0,0">
+                        <Run Text="Dynamische Summe:" />
+                        <Run Text="{Binding Path=DynamicSum, StringFormat=N2}" />
                     </TextBlock>
                 </StackPanel>
             </GroupBox>
@@ -228,7 +230,8 @@
             IsTabStop="False"
             ItemsSource="{Binding Path=ListViewSource, UpdateSourceTrigger=PropertyChanged}"
             ScrollViewer.IsDeferredScrollingEnabled="False"
-            SelectedItem="{Binding Path=CurrentSelectedItem, UpdateSourceTrigger=PropertyChanged}">
+            SelectedItem="{Binding Path=CurrentSelectedItem, UpdateSourceTrigger=PropertyChanged}"
+            SelectionMode="Extended">
 
             <ListView.GroupStyle>
                 <GroupStyle>
@@ -288,7 +291,7 @@
                         Header="Aufwand Max">
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
-                                <TextBox Width="80" Text="{Binding Path=[AufwandMax], StringFormat=N2}">
+                                <TextBox Width="70" Text="{Binding Path=[AufwandMax], StringFormat=N2}">
                                     <i:Interaction.Behaviors>
                                         <behavior:TextBoxInputBehavior
                                             DecimalPlace="2"
@@ -307,7 +310,7 @@
                         Header="Aufwand Mittel">
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
-                                <TextBox Width="80" Text="{Binding Path=[AufwandMid], StringFormat=N2}">
+                                <TextBox Width="70" Text="{Binding Path=[AufwandMid], StringFormat=N2}">
                                     <i:Interaction.Behaviors>
                                         <behavior:TextBoxInputBehavior
                                             DecimalPlace="2"
@@ -326,7 +329,7 @@
                         Header="Aufwand Min">
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
-                                <TextBox Width="80" Text="{Binding Path=[AufwandMin], StringFormat=N2}">
+                                <TextBox Width="70" Text="{Binding Path=[AufwandMin], StringFormat=N2}">
                                     <i:Interaction.Behaviors>
                                         <behavior:TextBoxInputBehavior
                                             DecimalPlace="2"
