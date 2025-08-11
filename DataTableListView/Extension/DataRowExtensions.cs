@@ -198,5 +198,49 @@ namespace System.Data
 
             return result;
         }
+
+        public static IEnumerable<DataColumn> GetChangedColumns(this DataRow row)
+        {
+            return row.Table.Columns.Cast<DataColumn>().Where(col => HasCellChanged(row, col));
+        }
+
+        public static IEnumerable<DataColumn> GetChangedColumns(this IEnumerable<DataRow> rows)
+        {
+            return rows.SelectMany(row => row.GetChangedColumns()).Distinct();
+        }
+
+        public static IEnumerable<DataColumn> GetChangedColumns(this DataTable table)
+        {
+            return table.GetChanges().Rows.Cast<DataRow>().GetChangedColumns();
+        }
+
+        private static bool HasCellChanged(DataRow row, DataColumn col)
+        {
+            if (!row.HasVersion(DataRowVersion.Original))
+            {
+                // Row has been added. All columns have changed. 
+                return true;
+            }
+
+            if (!row.HasVersion(DataRowVersion.Current))
+            {
+                // Row has been removed. No columns have changed.
+                return false;
+            }
+
+            var originalVersion = row[col, DataRowVersion.Original];
+            var currentVersion = row[col, DataRowVersion.Current];
+
+            if (originalVersion == DBNull.Value && currentVersion == DBNull.Value)
+            {
+                return false;
+            }
+            else if (originalVersion != DBNull.Value && currentVersion != DBNull.Value)
+            {
+                return !originalVersion.Equals(currentVersion);
+            }
+
+            return true;
+        }
     }
 }

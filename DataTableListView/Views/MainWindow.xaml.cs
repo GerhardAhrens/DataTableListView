@@ -45,6 +45,7 @@ namespace DataTableListView
         private string _NotifyMessage;
         private IEnumerable<string> _ColumnsSource;
         private string _SelectedColumnGroup;
+        private decimal _SummeMax;
 
         public MainWindow()
         {
@@ -202,6 +203,19 @@ namespace DataTableListView
             }
         }
 
+        public decimal SummeMax
+        {
+            get { return _SummeMax; }
+            set
+            {
+                if (this._SummeMax != value)
+                {
+                    this._SummeMax = value;
+                    this.OnPropertyChanged();
+                }
+            }
+        }
+
         #endregion Properties
 
 
@@ -226,6 +240,7 @@ namespace DataTableListView
             WeakEventManager<Button, RoutedEventArgs>.AddHandler(this.BtnRowLast, "Click", this.OnRowNavigation);
             WeakEventManager<MenuItem, RoutedEventArgs>.AddHandler(this.mnuCurrentEditRow, "Click", this.OnEditRow);
             WeakEventManager<MenuItem, RoutedEventArgs>.AddHandler(this.mnuCurrentDeleteRow, "Click", this.OnDeleteRow);
+            WeakEventManager<MenuItem, RoutedEventArgs>.AddHandler(this.mnuCurrentCopyRow, "Click", this.OnCopyRow);
 
             this.DataContext = this;
 
@@ -270,6 +285,7 @@ namespace DataTableListView
                         if (this.DisplayRowCount > 0)
                         {
                             this.ListViewSource.Filter = rowItem => this.DataDefaultFilter(rowItem as DataRow);
+                            this.ListViewSource.SortDescriptions.Add(new SortDescription("[Kapitel]", ListSortDirection.Ascending));
                             if (isRefresh == false)
                             {
                                 this.ListViewSource.MoveCurrentToPosition(currentPos);
@@ -284,6 +300,8 @@ namespace DataTableListView
                             this.ListViewSource.Cast<DataRow>().First().Table.AcceptChanges();
                             WeakEventManager<DataTable, DataRowChangeEventArgs>.RemoveHandler(this.CurrentSelectedItem.Table, "RowChanged", this.OnRowChanged);
                             WeakEventManager<DataTable, DataRowChangeEventArgs>.AddHandler(this.CurrentSelectedItem.Table, "RowChanged", this.OnRowChanged);
+
+                            this.SummeMax = this.ListViewSource.Cast<DataRow>().Sum<DataRow>(s => s.GetField<decimal>("AufwandMax"));
                         }
 
                         this.NotifyMessage = Humanizer.Get("Bereit: [ein/{0}/keine] [Datensatz/Datensätze]", this.DisplayRowCount);
@@ -336,6 +354,12 @@ namespace DataTableListView
             int modifiedCount = e.Row.Table.GetChanges(DataRowState.Modified).Rows.Count;
 
             this.NotifyMessage = Humanizer.Get("[ein/{0}/keine] [Datensatz/Datensätze] geändert", modifiedCount);
+
+            if (modifiedCount > 0)
+            {
+                this.SummeMax = this.ListViewSource.Cast<DataRow>().Sum<DataRow>( s => s.GetField<decimal>("AufwandMax"));
+            }
+
         }
 
         private bool DataDefaultFilter(DataRow rowItem)
@@ -387,7 +411,7 @@ namespace DataTableListView
 
         private void OnNewRow(object sender, RoutedEventArgs e)
         {
-            EditDetailView editDetailView = new EditDetailView();
+            EditDetailView editDetailView = new EditDetailView(RowNextAction.AddRow);
             bool? dlgResult = editDetailView.ShowDialog();
 
             if (dlgResult == true)
@@ -399,8 +423,7 @@ namespace DataTableListView
 
         private void OnEditRow(object sender, RoutedEventArgs e)
         {
-            DataRow editRow = this.CurrentSelectedItem.Clone<DataRow>(this.CurrentSelectedItem.Table);
-            EditDetailView editDetailView = new EditDetailView(editRow);
+            EditDetailView editDetailView = new EditDetailView(this.CurrentSelectedItem,RowNextAction.UpdateRow);
             bool? dlgResult = editDetailView.ShowDialog();
 
             if (dlgResult == true)
@@ -433,6 +456,26 @@ namespace DataTableListView
                     }
 
                     this.LoadDataHandler(true);
+                }
+            }
+        }
+
+        private void OnCopyRow(object sender, RoutedEventArgs e)
+        {
+            if (this.CurrentSelectedItem != null)
+            {
+                string msgText = this.CurrentSelectedItem.GetField<int>("Kapitel").ToString(CultureInfo.CurrentCulture);
+                MessageBoxResult msgYN = MessageBox.Show($"Wollen Sie den gewählten Datensatz (Kapitel: {msgText}) kopieren?", "Kopiere Eintrag", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                if (msgYN == MessageBoxResult.Yes)
+                {
+                    EditDetailView editDetailView = new EditDetailView(this.CurrentSelectedItem, RowNextAction.CopyRow);
+                    bool? dlgResult = editDetailView.ShowDialog();
+
+                    if (dlgResult == true)
+                    {
+                        int rowPos = this.ListViewSource.CurrentPosition;
+                        this.LoadDataHandler(false, rowPos);
+                    }
                 }
             }
         }

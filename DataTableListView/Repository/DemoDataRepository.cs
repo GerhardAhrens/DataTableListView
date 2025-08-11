@@ -27,6 +27,7 @@ namespace DataTableListView.Repository
     using System.ComponentModel;
     using System.Data;
     using System.Data.SQLite;
+    using System.Security.AccessControl;
 
     using DataTableListView.DataFunction;
     using DataTableListView.Generator;
@@ -175,6 +176,28 @@ namespace DataTableListView.Repository
                 string errorText = ex.Message;
                 throw;
             }
+        }
+
+        public bool CheckContentWith(DataRow entity, int maxResult, params string[] columns)
+        {
+            bool result = false;
+
+            try
+            {
+                string sql = $"SELECT count(*) FROM {this.Tablename} WHERE {columns[0]} = @{columns[0]} OR {columns[1]} = @{columns[1]}";
+                Dictionary<string, object> parameterCollection = new Dictionary<string, object>();
+                parameterCollection.Add($"@{columns[0]}", entity.GetField<int>(columns[0]));
+                parameterCollection.Add($"@{columns[1]}", entity.GetField<string>(columns[1]));
+                int rowFound = base.Connection.RecordSet<int>(sql, parameterCollection).Get().Result;
+                result = rowFound > maxResult ? true : false;
+            }
+            catch (Exception ex)
+            {
+                string errorText = ex.Message;
+                throw;
+            }
+
+            return result;
         }
     }
 }

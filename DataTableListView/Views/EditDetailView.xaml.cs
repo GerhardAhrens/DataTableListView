@@ -7,6 +7,8 @@
     using System.Windows.Controls;
     using System.Windows.Input;
 
+    using DataTableListView.Comparer;
+    using DataTableListView.Core;
     using DataTableListView.Repository;
 
     /// <summary>
@@ -16,27 +18,40 @@
     {
         public event PropertyChangedEventHandler PropertyChanged;
         private string _WindowTitel;
+        private DataRow _OriginalRow;
         private DataRow _CurrentRow;
         private ICollectionView _AktionSource;
 
-        public EditDetailView()
+        public EditDetailView(RowNextAction rowAction = RowNextAction.AddRow)
         {
             this.InitializeComponent();
             WeakEventManager<Window, RoutedEventArgs>.AddHandler(this, "Loaded", this.OnLoaded);
             WeakEventManager<Window, CancelEventArgs>.AddHandler(this, "Closing", this.OnWindowClosing);
 
+            this.RowAction = rowAction;
             this.WindowTitel = "Neuer Eintrag erstellen";
             this.CurrentRow = null;
         }
 
-        public EditDetailView(DataRow currentRow)
+        public EditDetailView(DataRow currentRow, RowNextAction rowAction = RowNextAction.UpdateRow)
         {
             this.InitializeComponent();
             WeakEventManager<Window, RoutedEventArgs>.AddHandler(this, "Loaded", this.OnLoaded);
             WeakEventManager<Window, CancelEventArgs>.AddHandler(this, "Closing", this.OnWindowClosing);
 
-            this.WindowTitel = "Gewählter Eintrag bearbeiten";
-            this.CurrentRow = currentRow;
+            this.RowAction = rowAction;
+            if (currentRow != null && rowAction == RowNextAction.UpdateRow)
+            {
+                this.WindowTitel = "Gewählter Eintrag bearbeiten";
+                this.OriginalRow = currentRow;
+                this.CurrentRow = currentRow;
+            }
+            else if (currentRow != null && rowAction == RowNextAction.CopyRow)
+            {
+                this.WindowTitel = "Gewählter Eintrag kopieren";
+                this.OriginalRow = currentRow;
+                this.CurrentRow = currentRow;
+            }
         }
 
         #region Properties
@@ -48,6 +63,19 @@
                 if (this._WindowTitel != value)
                 {
                     this._WindowTitel = value;
+                    this.OnPropertyChanged();
+                }
+            }
+        }
+
+        public DataRow OriginalRow
+        {
+            get { return _OriginalRow; }
+            set
+            {
+                if (this._OriginalRow != value)
+                {
+                    this._OriginalRow = value;
                     this.OnPropertyChanged();
                 }
             }
@@ -80,7 +108,8 @@
         }
 
         private bool? DialogCloseResult { get; set; }
-        private bool? RowIsNew { get; set; }
+        private RowNextAction RowAction { get; set; }
+        private bool IsColumnModified { get; set; }
 
         #endregion Properties
 
@@ -104,16 +133,24 @@
                 {
                     this.AktionSource = repository.SelectAktion();
 
-                    if (this.CurrentRow == null)
+                    if (this.CurrentRow == null && this.RowAction == RowNextAction.AddRow)
                     {
                         this.CurrentRow = repository.NewDataRow();
                         this.CurrentRow.SetField<Guid>("Id", Guid.NewGuid());
-                        this.RowIsNew = true;
                     }
-                    else
+                    else if (this.CurrentRow != null && this.RowAction == RowNextAction.UpdateRow)
                     {
-                        this.RowIsNew = false;
+                        this.CurrentRow = this.OriginalRow.Clone<DataRow>(this.OriginalRow.Table);
                     }
+                    else if (this.CurrentRow != null && this.RowAction == RowNextAction.CopyRow)
+                    {
+                        this.CurrentRow = this.OriginalRow.Clone<DataRow>(this.OriginalRow.Table);
+                        this.CurrentRow.SetField("Id", Guid.NewGuid());
+                    }
+
+                    WeakEventManager<DataTable, DataColumnChangeEventArgs>.AddHandler(this.CurrentRow.Table, "ColumnChanged", this.OnColumnChanged);
+                    this.StatusLineA.Text = "Bereit";
+                    this.IsColumnModified = false;
                 }
             }
             catch (Exception ex)
@@ -121,6 +158,12 @@
                 string errorText = ex.Message;
                 throw;
             }
+        }
+
+        private void OnColumnChanged(object sender, DataColumnChangeEventArgs e)
+        {
+            this.StatusLineA.Text = "Geändert";
+            this.IsColumnModified = true;
         }
 
         private void OnCloseDialog(object sender, RoutedEventArgs e)
@@ -136,33 +179,75 @@
             /* prüfen ob alle Kriterien zum verlassen des Dialog erfüllt sind */
             /* wenn nein, e.Cancel = true; */
 
-            /*
-            MessageBoxResult msgYN = MessageBox.Show("Es sind nicht alle Kriterien zum verlassen des Dialog erfüllt. Trotzdem ohne speichern beenden?", "Dialog schließen", MessageBoxButton.YesNo, MessageBoxImage.Question);
-            if (msgYN == MessageBoxResult.No)
+            if (this.IsColumnModified == true)
             {
-                e.Cancel = true;
+                MessageBoxResult msgYN = MessageBox.Show("Es sind noch ungespeicherte Änderungen vorhanden. Soll der Dialog ohne speichern beenden werden?", "Dialog schließen", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                if (msgYN == MessageBoxResult.No)
+                {
+                    e.Cancel = true;
+                }
             }
-            */
         }
+
 
         private void OnSaveRow(object sender, RoutedEventArgs e)
         {
             try
             {
-                using (DemoDataRepository repository = new DemoDataRepository())
+                if (CheckInputControls() == false)
                 {
-                    if (this.RowIsNew == false)
-                    {
-                        repository.Update(this.CurrentRow);
-                    }
-                    else
-                    {
-                        repository.Add(this.CurrentRow);
-                    }
+                    return;
                 }
 
-                this.DialogCloseResult = true;
-                this.Close();
+
+                using (DemoDataRepository repository = new DemoDataRepository())
+                {
+                    if (this.RowAction == RowNextAction.UpdateRow)
+                    {
+                        if (CompareDataRow.IsEquals(this.CurrentRow, this.OriginalRow) == false)
+                        {
+                            if (repository.CheckContentWith(this.CurrentRow,1, "Kapitel", "KapitelTitel") == false)
+                            {
+                                repository.Update(this.CurrentRow);
+                                this.IsColumnModified = false;
+                                this.DialogCloseResult = true;
+                                this.Close();
+                            }
+                            else
+                            {
+                                MessageBox.Show($"Die Werte für Kapitel und Thema sind bereits vorhanden, wählen Sie daher andere Werte!", "Eingabeprüfung", MessageBoxButton.OK, MessageBoxImage.Error);
+                            }
+                        }
+                    }
+                    else if (this.RowAction == RowNextAction.CopyRow)
+                    {
+                        if (repository.CheckContentWith(this.CurrentRow,0, "Kapitel", "KapitelTitel") == false)
+                        {
+                            repository.Add(this.CurrentRow);
+                            this.IsColumnModified = false;
+                            this.DialogCloseResult = true;
+                            this.Close();
+                        }
+                        else
+                        {
+                            MessageBox.Show("Die Werte für Kapitel und Thema sind bereits vorhanden, wählen Sie daher andere Werte!", "Eingabeprüfung", MessageBoxButton.OK, MessageBoxImage.Error);
+                        }
+                    }
+                    else if (this.RowAction == RowNextAction.AddRow)
+                    {
+                        if (repository.CheckContentWith(this.CurrentRow, 0, "Kapitel", "KapitelTitel") == false)
+                        {
+                            repository.Add(this.CurrentRow);
+                            this.IsColumnModified = false;
+                            this.DialogCloseResult = true;
+                            this.Close();
+                        }
+                        else
+                        {
+                            MessageBox.Show("Die Werte für Kapitel und Thema sind bereits vorhanden, wählen Sie daher andere Werte!", "Eingabeprüfung", MessageBoxButton.OK, MessageBoxImage.Error);
+                        }
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -170,6 +255,42 @@
                 throw;
             }
         }
+
+        private bool CheckInputControls()
+        {
+            bool result = false;
+
+            try
+            {
+                while (result == false)
+                {
+                    if (this.TxtKapitel.Text.Length == 0 || this.CurrentRow.GetField<int>("Kapitel") <= 0)
+                    {
+                        MessageBox.Show("Für Kapitel dürfen nur Werte > 0 eingegeben werden", "Eingabeprüfung", MessageBoxButton.OK, MessageBoxImage.Error);
+                        result = false;
+                        break;
+                    }
+
+                    if (this.CurrentRow.GetField<string>("KapitelTitel").Length == 0)
+                    {
+                        MessageBox.Show("Für das Feld Thema muß ein Text eingetragen werden", "Eingabeprüfung", MessageBoxButton.OK, MessageBoxImage.Error);
+                        result = false;
+                        break;
+                    }
+
+                    result = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                string errorText = ex.Message;
+                throw;
+            }
+
+            return result;
+        }
+
+
         #region INotifyPropertyChanged implementierung
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = "")
         {

@@ -24,7 +24,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="45" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
+            <RowDefinition Height="30" />
         </Grid.RowDefinitions>
 
         <Grid.ColumnDefinitions>
@@ -75,6 +75,7 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <Grid.ColumnDefinitions>
@@ -88,13 +89,18 @@
                 FontWeight="Medium"
                 Text="Kapitel" />
             <TextBox
+                x:Name="TxtKapitel"
                 Grid.Row="0"
                 Grid.Column="1"
                 Width="80"
                 Height="25"
                 Margin="0,3,0,3"
                 HorizontalAlignment="Left"
-                Text="{Binding Path=CurrentRow[Kapitel], UpdateSourceTrigger=PropertyChanged}" />
+                Text="{Binding Path=CurrentRow[Kapitel], UpdateSourceTrigger=PropertyChanged, FallbackValue=0}">
+                <i:Interaction.Behaviors>
+                    <behavior:TextBoxInputBehavior EscapeClearsText="True" InputMode="DigitInput" />
+                </i:Interaction.Behaviors>
+            </TextBox>
 
             <TextBlock
                 Grid.Row="1"
@@ -136,7 +142,7 @@
                 Height="25"
                 Margin="0,3,0,3"
                 HorizontalAlignment="Left"
-                Text="{Binding Path=CurrentRow[AufwandMin], UpdateSourceTrigger=PropertyChanged}">
+                Text="{Binding Path=CurrentRow[AufwandMin], UpdateSourceTrigger=PropertyChanged, StringFormat=N2}">
                 <i:Interaction.Behaviors>
                     <behavior:TextBoxInputBehavior
                         DecimalPlace="2"
@@ -158,7 +164,7 @@
                 Height="25"
                 Margin="0,3,0,3"
                 HorizontalAlignment="Left"
-                Text="{Binding Path=CurrentRow[AufwandMid], UpdateSourceTrigger=PropertyChanged}">
+                Text="{Binding Path=CurrentRow[AufwandMid], UpdateSourceTrigger=PropertyChanged, StringFormat=N2}">
                 <i:Interaction.Behaviors>
                     <behavior:TextBoxInputBehavior
                         DecimalPlace="2"
@@ -180,7 +186,7 @@
                 Height="25"
                 Margin="0,3,0,3"
                 HorizontalAlignment="Left"
-                Text="{Binding Path=CurrentRow[AufwandMax], UpdateSourceTrigger=PropertyChanged}">
+                Text="{Binding Path=CurrentRow[AufwandMax], UpdateSourceTrigger=PropertyChanged, StringFormat=N2}">
                 <i:Interaction.Behaviors>
                     <behavior:TextBoxInputBehavior
                         DecimalPlace="2"
@@ -206,7 +212,7 @@
                 IsTextSearchCaseSensitive="False"
                 IsTextSearchEnabled="True"
                 ItemsSource="{Binding Path=AktionSource}"
-                SelectedValue="{Binding Path=CurrentRow[AktionId], UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                SelectedValue="{Binding Path=CurrentRow[AktionId], UpdateSourceTrigger=PropertyChanged, Mode=TwoWay, FallbackValue=-1}"
                 SelectedValuePath="[Id]"
                 StaysOpenOnEdit="True" />
 
@@ -220,8 +226,45 @@
                 Grid.Column="1"
                 Margin="0,3,0,3"
                 HorizontalAlignment="Left"
-                IsChecked="{Binding Path=CurrentRow[Aktiv]}"
+                IsChecked="{Binding Path=CurrentRow[Aktiv], UpdateSourceTrigger=PropertyChanged, FallbackValue=False}"
                 IsThreeState="True" />
+
+            <TextBlock
+                Grid.Row="8"
+                Grid.Column="0"
+                FontWeight="Medium"
+                Text="Termin" />
+            <DatePicker
+                Grid.Row="8"
+                Grid.Column="1"
+                Width="150"
+                HorizontalAlignment="Left"
+                SelectedDate="{Binding Path=CurrentRow[Termin], UpdateSourceTrigger=PropertyChanged}"
+                SelectedDateFormat="Short" />
         </Grid>
+
+
+        <Rectangle
+            Grid.Row="2"
+            Grid.Column="0"
+            Grid.ColumnSpan="2"
+            Height="2"
+            Margin="0,-30,0,0"
+            HorizontalAlignment="Stretch"
+            Fill="Black" />
+
+        <TextBlock
+            x:Name="StatusLine"
+            Grid.Row="2"
+            Grid.Column="1"
+            Margin="5,0,0,0"
+            VerticalAlignment="Center">
+            <Run FontWeight="Medium" Text="Status:" />
+            <Run
+                x:Name="StatusLineA"
+                FontWeight="Medium"
+                Foreground="Blue"
+                Text="Bereit" />
+        </TextBlock>
     </Grid>
 </Window>
