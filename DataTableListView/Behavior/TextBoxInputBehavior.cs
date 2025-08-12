@@ -280,25 +280,36 @@ namespace DataTableListView.Behaviors
 
             if (e.Key == Key.Delete)
             {
-                /*wenn was selektiert wird dann wird nur das gelöscht mit ENTF*/
-                if (this.AssociatedObject?.SelectionLength > 0)
+                if (this.InputMode == TextBoxInputMode.DigitInput || this.InputMode == TextBoxInputMode.DecimalInput || this.InputMode == TextBoxInputMode.CurrencyInput)
                 {
-                    if (!this.IsValidInput(this.GetText(string.Empty)))
+                    if (this.AssociatedObject.Text.Length <= 1)
                     {
-                        System.Media.SystemSounds.Beep.Play();
+                        this.AssociatedObject.Text = "0";
                         e.Handled = true;
                     }
                 }
-                else if (this.AssociatedObject?.CaretIndex < this.AssociatedObject.Text.Length)
+                else
                 {
-                    /*selber löschen */
-                    var txt = this.AssociatedObject.Text;
-                    var entf = txt.Remove(this.AssociatedObject.CaretIndex, 1);
-
-                    if (!this.IsValidInput(entf))
+                    /*wenn was selektiert wird dann wird nur das gelöscht mit ENTF*/
+                    if (this.AssociatedObject?.SelectionLength > 0)
                     {
-                        System.Media.SystemSounds.Beep.Play();
-                        e.Handled = true;
+                        if (!this.IsValidInput(this.GetText(string.Empty)))
+                        {
+                            System.Media.SystemSounds.Beep.Play();
+                            e.Handled = true;
+                        }
+                    }
+                    else if (this.AssociatedObject?.CaretIndex < this.AssociatedObject.Text.Length)
+                    {
+                        /*selber löschen */
+                        var txt = this.AssociatedObject.Text;
+                        var entf = txt.Remove(this.AssociatedObject.CaretIndex, 1);
+
+                        if (!this.IsValidInput(entf))
+                        {
+                            System.Media.SystemSounds.Beep.Play();
+                            e.Handled = true;
+                        }
                     }
                 }
             }

@@ -31,15 +31,17 @@
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <StackPanel
+        <DockPanel
             Grid.Row="0"
             Grid.Column="0"
-            Orientation="Horizontal">
+            Grid.ColumnSpan="2"
+            Margin="5,0,5,0"
+            LastChildFill="True">
             <Button
                 x:Name="BtnCloseDialog"
                 Width="40"
                 Height="40"
-                HorizontalAlignment="Left"
+                DockPanel.Dock="Left"
                 ToolTip="Dialog beenden">
                 <Image Source="{StaticResource ResourceKey=IconApplicationExit2}" Stretch="None" />
             </Button>
@@ -49,11 +51,29 @@
                 Width="40"
                 Height="40"
                 Margin="10,0,0,0"
-                HorizontalAlignment="Left"
+                DockPanel.Dock="Left"
                 ToolTip="Alle Änderungen speichern">
                 <Image Source="{StaticResource ResourceKey=IconSaveRow}" Stretch="None" />
             </Button>
-        </StackPanel>
+
+            <Button
+                x:Name="BtnShowErrors"
+                Width="50"
+                Height="40"
+                HorizontalAlignment="Right"
+                DockPanel.Dock="Right"
+                ToolTip="Eingabefehler im Detail anzeigen">
+                <Button.Content>
+                    <StackPanel Orientation="Horizontal">
+                        <Image Source="{StaticResource ResourceKey=IconValidationError}" Stretch="None" />
+                        <TextBlock
+                            FontSize="14"
+                            FontWeight="Medium"
+                            Text="{Binding Path=ErrorCount, UpdateSourceTrigger=PropertyChanged, FallbackValue=00}" />
+                    </StackPanel>
+                </Button.Content>
+            </Button>
+        </DockPanel>
 
         <Rectangle
             Grid.Row="0"

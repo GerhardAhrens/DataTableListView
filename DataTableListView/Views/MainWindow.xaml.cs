@@ -468,6 +468,7 @@ namespace DataTableListView
         private void OnNewRow(object sender, RoutedEventArgs e)
         {
             EditDetailView editDetailView = new EditDetailView(RowNextAction.AddRow);
+            editDetailView.Owner = this;
             bool? dlgResult = editDetailView.ShowDialog();
 
             if (dlgResult == true)
@@ -480,6 +481,7 @@ namespace DataTableListView
         private void OnEditRow(object sender, RoutedEventArgs e)
         {
             EditDetailView editDetailView = new EditDetailView(this.CurrentSelectedItem,RowNextAction.UpdateRow);
+            editDetailView.Owner = this;
             bool? dlgResult = editDetailView.ShowDialog();
 
             if (dlgResult == true)
@@ -525,6 +527,7 @@ namespace DataTableListView
                 if (msgYN == MessageBoxResult.Yes)
                 {
                     EditDetailView editDetailView = new EditDetailView(this.CurrentSelectedItem, RowNextAction.CopyRow);
+                    editDetailView.Owner = this;
                     bool? dlgResult = editDetailView.ShowDialog();
 
                     if (dlgResult == true)

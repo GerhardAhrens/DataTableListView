@@ -11,8 +11,6 @@
     using DataTableListView.Core;
     using DataTableListView.Repository;
 
-    using static System.Runtime.InteropServices.JavaScript.JSType;
-
     /// <summary>
     /// Interaktionslogik für EditDetailView.xaml
     /// </summary>
@@ -20,8 +18,9 @@
     {
         public event PropertyChangedEventHandler PropertyChanged;
         private Dictionary<string, Func<Result<string>>> ValidationRules;
-        private Dictionary<string, string> errors = new Dictionary<string, string>();
+        private Dictionary<string, string> _ValidationErrors;
         private string _WindowTitel;
+        private int _ErrorCount;
         private DataRow _OriginalRow;
         private DataRow _CurrentRow;
         private ICollectionView _AktionSource;
@@ -32,6 +31,7 @@
             WeakEventManager<Window, RoutedEventArgs>.AddHandler(this, "Loaded", this.OnLoaded);
             WeakEventManager<Window, CancelEventArgs>.AddHandler(this, "Closing", this.OnWindowClosing);
 
+            this.ValidationErrors = new Dictionary<string, string>();
             this.ValidationRules = new Dictionary<string, Func<Result<string>>>();
             this.RowAction = rowAction;
             this.WindowTitel = "Neuer Eintrag erstellen";
@@ -44,6 +44,7 @@
             WeakEventManager<Window, RoutedEventArgs>.AddHandler(this, "Loaded", this.OnLoaded);
             WeakEventManager<Window, CancelEventArgs>.AddHandler(this, "Closing", this.OnWindowClosing);
 
+            this.ValidationErrors = new Dictionary<string, string>();
             this.ValidationRules = new Dictionary<string, Func<Result<string>>>();
             this.RowAction = rowAction;
             if (currentRow != null && rowAction == RowNextAction.UpdateRow)
@@ -113,6 +114,32 @@
             }
         }
 
+        public Dictionary<string, string> ValidationErrors
+        {
+            get { return _ValidationErrors; }
+            set
+            {
+                if (this._ValidationErrors != value)
+                {
+                    this._ValidationErrors = value;
+                    this.OnPropertyChanged();
+                }
+            }
+        }
+
+        public int ErrorCount
+        {
+            get { return _ErrorCount; }
+            set
+            {
+                if (this._ErrorCount != value)
+                {
+                    this._ErrorCount = value;
+                    this.OnPropertyChanged();
+                }
+            }
+        }
+
         private bool? DialogCloseResult { get; set; }
         private RowNextAction RowAction { get; set; }
         private bool IsColumnModified { get; set; }
@@ -125,6 +152,8 @@
             Keyboard.Focus(this);
             WeakEventManager<Button, RoutedEventArgs>.AddHandler(this.BtnCloseDialog, "Click", this.OnCloseDialog);
             WeakEventManager<Button, RoutedEventArgs>.AddHandler(this.BtnSaveRow, "Click", this.OnSaveRow);
+            WeakEventManager<Button, RoutedEventArgs>.AddHandler(this.BtnShowErrors, "Click", this.OnShowErrors);
+
             this.RegisterValidations();
             this.DataContext = this;
 
@@ -157,6 +186,7 @@
                     WeakEventManager<DataTable, DataColumnChangeEventArgs>.AddHandler(this.CurrentRow.Table, "ColumnChanged", this.OnColumnChanged);
                     this.StatusLineA.Text = "Bereit";
                     this.IsColumnModified = false;
+                    this.CheckInputControls("Kapitel", "KapitelTitel");
                 }
             }
             catch (Exception ex)
@@ -171,14 +201,9 @@
             this.StatusLineA.Text = "Geändert";
             this.IsColumnModified = true;
 
-            Func<Result<string>> function = null;
-            if (this.ValidationRules.TryGetValue(e.Column.ColumnName, out function) == true)
-            {
-                Result<string> ruleText = this.DoValidation(function, e.Column.ColumnName);
-                if (string.IsNullOrEmpty(ruleText.Value) == false)
-                {
-                }
-            }
+            string fieldName = e.Column.ColumnName;
+
+            this.CheckInputControls(fieldName);
         }
 
         private void OnCloseDialog(object sender, RoutedEventArgs e)
@@ -208,7 +233,7 @@
         {
             try
             {
-                if (CheckInputControls() == false)
+                if (this.CheckInputControls("Kapitel", "KapitelTitel") == true)
                 {
                     return;
                 }
@@ -270,29 +295,48 @@
             }
         }
 
-        private bool CheckInputControls()
+        private bool CheckInputControls(params string[] fieldNames)
         {
             bool result = false;
 
             try
             {
-                while (result == false)
+                foreach (string fieldName in fieldNames)
                 {
-                    if (this.TxtKapitel.Text.Length == 0 || this.CurrentRow.GetField<int>("Kapitel") <= 0)
+                    Func<Result<string>> function = null;
+                    if (this.ValidationRules.TryGetValue(fieldName, out function) == true)
                     {
-                        MessageBox.Show("Für Kapitel dürfen nur Werte > 0 eingegeben werden", "Eingabeprüfung", MessageBoxButton.OK, MessageBoxImage.Error);
-                        result = false;
-                        break;
+                        Result<string> ruleText = this.DoValidation(function, fieldName);
+                        if (string.IsNullOrEmpty(ruleText.Value) == false)
+                        {
+                            if (this.ValidationErrors.ContainsKey(fieldName) == false)
+                            {
+                                this.ValidationErrors.Add(fieldName, ruleText.Value);
+                            }
+                        }
+                        else
+                        {
+                            if (this.ValidationErrors.ContainsKey(fieldName) == true)
+                            {
+                                this.ValidationErrors.Remove(fieldName);
+                            }
+                        }
                     }
+                }
 
-                    if (this.CurrentRow.GetField<string>("KapitelTitel").Length == 0)
-                    {
-                        MessageBox.Show("Für das Feld Thema muß ein Text eingetragen werden", "Eingabeprüfung", MessageBoxButton.OK, MessageBoxImage.Error);
-                        result = false;
-                        break;
-                    }
-
+                if (this.ValidationErrors != null && this.ValidationErrors.Count > 0)
+                {
+                    this.BtnSaveRow.IsEnabled = false;
+                    this.BtnShowErrors.Visibility = Visibility.Visible;
+                    this.ErrorCount = this.ValidationErrors.Count;
                     result = true;
+                }
+                else if (this.ValidationErrors != null && this.ValidationErrors.Count == 0)
+                {
+                    this.BtnSaveRow.IsEnabled = true;
+                    this.BtnShowErrors.Visibility = Visibility.Hidden;
+                    this.ErrorCount = this.ValidationErrors.Count;
+                    result = false;
                 }
             }
             catch (Exception ex)
@@ -309,12 +353,12 @@
         {
             this.ValidationRules.Add("Kapitel", () =>
             {
-                return InputValidation<DataRow>.This(this.CurrentRow).GreaterThanZero("Kapitel");
+                return InputValidation<DataRow>.This(this.CurrentRow).GreaterThanZero("Kapitel","KapitelNr");
             });
 
             this.ValidationRules.Add("KapitelTitel", () =>
             {
-                return InputValidation<DataRow>.This(this.CurrentRow).NotEmpty("KapitelTitel");
+                return InputValidation<DataRow>.This(this.CurrentRow).NotEmpty("KapitelTitel","Thema");
             });
         }
 
@@ -322,19 +366,11 @@
         {
             Result<string> result = validationFunc.Invoke();
 
-            if (errors.ContainsKey(propName) == true)
-            {
-                errors.Remove(propName);
-            }
-            else
-            {
-                if (string.IsNullOrEmpty(result.SuccessMessage) == false)
-                {
-                    errors[propName] = result.SuccessMessage;
-                }
-            }
-
             return result;
+        }
+
+        private void OnShowErrors(object sender, RoutedEventArgs e)
+        {
         }
         #endregion Register Validations
 

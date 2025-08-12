@@ -17,22 +17,24 @@
             return validation;
         }
 
-        public Result<string> NotEmpty(string fieldName)
+        public Result<string> NotEmpty(string fieldName, string displayName = "")
         {
             string result = string.Empty;
             bool resultValidError = false;
             string propertyValue = (string)((DataRow)validation.ThisObject).GetField<string>(fieldName);
 
+            displayName = string.IsNullOrEmpty(displayName) == true ? fieldName : displayName;
+
             if (string.IsNullOrEmpty(propertyValue) == true)
             {
-                result = $"Das Feld '{fieldName}' darf nicht leer sein.";
+                result = $"Das Feld '{displayName}' darf nicht leer sein.";
                 resultValidError = true;
             }
 
             return Result<string>.SuccessResult(result, resultValidError);
         }
 
-        public Result<string> InRange(string fieldName, int min, int max)
+        public Result<string> InRange(string fieldName, int min, int max, string displayName = "")
         {
             string result = string.Empty;
             bool resultValidError = false;
@@ -42,25 +44,27 @@
             {
                 return Result<string>.SuccessResult(result, resultValidError);
             }
+
+            displayName = string.IsNullOrEmpty(displayName) == true ? fieldName : displayName;
 
             if (string.IsNullOrEmpty(propertyValue.ToString()) == false)
             {
                 if ((Enumerable.Range(min, max).Contains(Convert.ToInt32(propertyValue, CultureInfo.CurrentCulture))) == false)
                 {
-                    result = $"Das Feld '{fieldName}' muß zwischen {min} und {max} liegen";
+                    result = $"Das Feld '{displayName}' muß zwischen {min} und {max} liegen";
                     resultValidError = true;
                 }
             }
             else
             {
-                result = $"Das Feld '{fieldName}' darf nicht leer sein.";
+                result = $"Das Feld '{displayName}' darf nicht leer sein.";
                 resultValidError = true;
             }
 
             return Result<string>.SuccessResult(result, resultValidError);
         }
 
-        public Result<string> GreaterThanZero(string fieldName)
+        public Result<string> GreaterThanZero(string fieldName, string displayName = "")
         {
             string result = string.Empty;
             bool resultValidError = false;
@@ -70,6 +74,8 @@
             {
                 return Result<string>.SuccessResult(result, resultValidError);
             }
+
+            displayName = string.IsNullOrEmpty(displayName) == true ? fieldName : displayName;
 
             if (string.IsNullOrEmpty(propertyValue.ToString()) == false)
             {
@@ -78,13 +84,13 @@
                 {
                     if (testDouble <= 0)
                     {
-                        result = $"Der Feld '{fieldName}' muß größer 0 sein";
+                        result = $"Der Feld '{displayName}' muß größer 0 sein";
                         resultValidError = true;
                     }
                 }
                 else
                 {
-                    result = $"Das Feld '{fieldName}' nicht leer sein.";
+                    result = $"Das Feld '{displayName}' nicht leer sein.";
                     resultValidError = true;
                 }
             }
@@ -97,7 +103,7 @@
             return Result<string>.SuccessResult(result, resultValidError);
         }
 
-        public Result<string> GreaterOrZero(string fieldName)
+        public Result<string> GreaterOrZero(string fieldName, string displayName = "")
         {
             string result = string.Empty;
             bool resultValidError = false;
@@ -108,6 +114,8 @@
                 return Result<string>.SuccessResult(result, resultValidError);
             }
 
+            displayName = string.IsNullOrEmpty(displayName) == true ? fieldName : displayName;
+
             if (string.IsNullOrEmpty(propertyValue.ToString()) == false)
             {
                 double testDouble;
@@ -115,13 +123,13 @@
                 {
                     if (testDouble <= -1)
                     {
-                        result = $"Der Feld '{fieldName}' muß größer oder gleich 0 sein";
+                        result = $"Der Feld '{displayName}' muß größer oder gleich 0 sein";
                         resultValidError = true;
                     }
                 }
                 else
                 {
-                    result = $"Das Feld '{fieldName}' nicht leer sein.";
+                    result = $"Das Feld '{displayName}' nicht leer sein.";
                     resultValidError = true;
                 }
             }
