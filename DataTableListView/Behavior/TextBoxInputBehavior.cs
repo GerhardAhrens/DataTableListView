@@ -91,6 +91,8 @@ namespace DataTableListView.Behaviors
             this.AssociatedObject.PreviewKeyDown += this.AssociatedObjectPreviewKeyDown;
             this.AssociatedObject.KeyDown += this.AssociatedObjectKeyDown;
             this.AssociatedObject.LostFocus += this.AssociatedObjectLostFocus;
+            this.AssociatedObject.GotFocus += this.AssociatedObjectGotFocus;
+            this.AssociatedObject.PreviewMouseDown += this.AssociatedObjectPreviewMouseDown;
             if (this.InputMode == TextBoxInputMode.Date)
             {
                 this.AssociatedObject.HorizontalContentAlignment = HorizontalAlignment.Left;
@@ -115,6 +117,14 @@ namespace DataTableListView.Behaviors
             DataObject.AddPastingHandler(this.AssociatedObject, this.Pasting);
         }
 
+        private void AssociatedObjectPreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            this.AssociatedObject.Focusable = true;
+            this.AssociatedObject.Focus();
+            this.AssociatedObject.Select(0, this.AssociatedObject.Text.Length);
+            this.AssociatedObject.SelectAll();
+        }
+
         protected override void OnDetaching()
         {
             base.OnDetaching();
@@ -122,6 +132,8 @@ namespace DataTableListView.Behaviors
             this.AssociatedObject.PreviewKeyDown -= this.AssociatedObjectPreviewKeyDown;
             this.AssociatedObject.KeyDown -= this.AssociatedObjectKeyDown;
             this.AssociatedObject.LostFocus -= this.AssociatedObjectLostFocus;
+            this.AssociatedObject.GotFocus += this.AssociatedObjectGotFocus;
+            this.AssociatedObject.PreviewMouseDown += this.AssociatedObjectPreviewMouseDown;
 
             DataObject.RemovePastingHandler(this.AssociatedObject, this.Pasting);
         }
@@ -129,6 +141,14 @@ namespace DataTableListView.Behaviors
         private void AssociatedObjectKeyDown(object sender, KeyEventArgs e)
         {
             /*this.AssociatedObject.Text = Convert.ToDecimal(this.AssociatedObject.Text).ToString("C2");*/
+        }
+
+        private void AssociatedObjectGotFocus(object sender, RoutedEventArgs e)
+        {
+            this.AssociatedObject.Focusable = true;
+            this.AssociatedObject.Focus();
+            this.AssociatedObject.Select(0, this.AssociatedObject.Text.Length);
+            this.AssociatedObject.SelectAll();
         }
 
         private void AssociatedObjectLostFocus(object sender, RoutedEventArgs e)
@@ -285,6 +305,7 @@ namespace DataTableListView.Behaviors
                     if (this.AssociatedObject.Text.Length <= 1)
                     {
                         this.AssociatedObject.Text = "0";
+                        this.AssociatedObject.SelectAll();
                         e.Handled = true;
                     }
                 }
