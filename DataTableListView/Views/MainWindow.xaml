@@ -282,8 +282,20 @@
                     <GridViewColumn
                         x:Name="Titel"
                         Width="300"
-                        DisplayMemberBinding="{Binding Path=[Titel]}"
-                        Header="Beschreibung" />
+                        Header="Beschreibung">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBox Width="280" Text="{Binding Path=[Titel]}">
+                                    <i:Interaction.Behaviors>
+                                        <behavior:TextBoxInputBehavior
+                                            DecimalPlace="2"
+                                            EscapeClearsText="True"
+                                            InputMode="None" />
+                                    </i:Interaction.Behaviors>
+                                </TextBox>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
 
                     <GridViewColumn
                         x:Name="AufwandMax"
