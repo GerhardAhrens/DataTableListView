@@ -467,6 +467,7 @@ namespace DataTableListView
 
         private void OnNewRow(object sender, RoutedEventArgs e)
         {
+            /*
             EditDetailView editDetailView = new EditDetailView(RowNextAction.AddRow);
             editDetailView.Owner = this;
             bool? dlgResult = editDetailView.ShowDialog();
@@ -476,6 +477,22 @@ namespace DataTableListView
                 int rowPos = this.ListViewSource.CurrentPosition;
                 this.LoadDataHandler(false, rowPos);
             }
+            */
+
+            using (DemoDataRepository repository = new DemoDataRepository())
+            {
+                DataRow dr = this.CurrentSelectedItem.Table.NewRow();
+                dr.SetField<Guid>("Id", Guid.NewGuid());
+                this.CurrentSelectedItem.Table.Rows.Add(dr);
+                DataTable modifiedTables = this.CurrentSelectedItem.Table.GetChanges(DataRowState.Added);
+                if (modifiedTables != null)
+                {
+                    this.CurrentSelectedItem.Table.AcceptChanges();
+                    this.ListViewSource = CollectionViewSource.GetDefaultView(this.CurrentSelectedItem.Table.Rows) as CollectionView;
+                    this.ListViewSource.Refresh();
+                }
+            }
+
         }
 
         private void OnEditRow(object sender, RoutedEventArgs e)
@@ -541,6 +558,7 @@ namespace DataTableListView
 
         private void OnSaveRow(object sender, RoutedEventArgs e)
         {
+            /*
             Guid id = this.CurrentSelectedItem.GetField<Guid>("Id");
             int kapitel = this.CurrentSelectedItem.GetField<int>("Kapitel");
             string kapitelTitel = this.CurrentSelectedItem.GetField<string>("KapitelTitel");
@@ -551,24 +569,37 @@ namespace DataTableListView
             decimal aufwandMin = this.CurrentSelectedItem.GetField<decimal>("AufwandMin");
             bool? aktiv = this.CurrentSelectedItem.GetField<bool?>("Aktiv");
             int aktionId = this.CurrentSelectedItem.GetField<int>("AktionId");
+            */
 
-            DataTable modifiedTables = this.CurrentSelectedItem.Table.GetChanges(DataRowState.Modified);
-            if (modifiedTables != null)
+            if (this.CurrentSelectedItem != null)
             {
-                string msgText = $"Sollen die anstehenden Änderungen ({modifiedTables.Rows.Count}) gespeichert werden?";
-                MessageBoxResult msgYN = MessageBox.Show(msgText, "Änderungen speichern", MessageBoxButton.YesNo, MessageBoxImage.Question);
-                if (msgYN == MessageBoxResult.Yes)
+                DataTable modifiedTables = this.CurrentSelectedItem.Table.GetChanges(DataRowState.Modified);
+                if (modifiedTables != null)
                 {
-                    using (DemoDataRepository repository = new DemoDataRepository())
+                    string msgText = $"Sollen die anstehenden Änderungen ({modifiedTables.Rows.Count}) gespeichert werden?";
+                    MessageBoxResult msgYN = MessageBox.Show(msgText, "Änderungen speichern", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                    if (msgYN == MessageBoxResult.Yes)
                     {
-                        foreach (DataRow item in modifiedTables.Rows)
+                        using (DemoDataRepository repository = new DemoDataRepository())
                         {
-                            repository.Update(item);
+                            foreach (DataRow item in modifiedTables.Rows)
+                            {
+                                repository.Update(item);
+                            }
                         }
-                    }
 
-                    this.LoadDataHandler(true);
+                        this.LoadDataHandler(true);
+                    }
                 }
+            }
+            else
+            {
+                using (DemoDataRepository repository = new DemoDataRepository())
+                {
+                    //repository.Update(item);
+                }
+
+                this.LoadDataHandler(true);
             }
         }
 

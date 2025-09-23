@@ -183,10 +183,13 @@
                         this.CurrentRow.SetField("Id", Guid.NewGuid());
                     }
 
-                    WeakEventManager<DataTable, DataColumnChangeEventArgs>.AddHandler(this.CurrentRow.Table, "ColumnChanged", this.OnColumnChanged);
-                    this.StatusLineA.Text = "Bereit";
-                    this.IsColumnModified = false;
-                    this.CheckInputControls("Kapitel", "KapitelTitel");
+                    if (this.CurrentRow != null)
+                    {
+                        WeakEventManager<DataTable, DataColumnChangeEventArgs>.AddHandler(this.CurrentRow.Table, "ColumnChanged", this.OnColumnChanged);
+                        this.StatusLineA.Text = "Bereit";
+                        this.IsColumnModified = false;
+                        this.CheckInputControls("Kapitel", "KapitelTitel");
+                    }
                 }
             }
             catch (Exception ex)
