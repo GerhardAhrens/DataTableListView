@@ -247,8 +247,9 @@ namespace DataTableListView
             }
         }
 
-        #endregion Properties
+        private RowNextAction RowAction { get; set; }
 
+        #endregion Properties
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
@@ -342,6 +343,8 @@ namespace DataTableListView
 
                         this.NotifyMessage = Humanizer.Get("Bereit: [ein/{0}/keine] [Datensatz/Datensätze]", this.DisplayRowCount);
                     }
+
+                    this.RowAction = RowNextAction.None;
                 }
             }
             catch (Exception ex)
@@ -416,6 +419,7 @@ namespace DataTableListView
                 this.SummeMax = this.ListViewSource.Cast<DataRow>().Sum<DataRow>( s => s.GetField<decimal>("AufwandMax"));
             }
 
+            this.RowAction = RowNextAction.UpdateRow;
         }
 
         private bool DataDefaultFilter(DataRow rowItem)
@@ -481,15 +485,20 @@ namespace DataTableListView
 
             using (DemoDataRepository repository = new DemoDataRepository())
             {
+                int nextCount =this.ListViewSource.Cast<DataRow>().Count() +1;
                 DataRow dr = this.CurrentSelectedItem.Table.NewRow();
                 dr.SetField<Guid>("Id", Guid.NewGuid());
-                this.CurrentSelectedItem.Table.Rows.Add(dr);
+                dr.SetField<int>("Kapitel", nextCount);
+                dr.SetField<string>("KapitelTitel", $"Erstellt am: {DateTime.Now.ToString(CultureInfo.CurrentCulture)}" );
+                this.CurrentSelectedItem.Table.Rows.InsertAt(dr, nextCount);
                 DataTable modifiedTables = this.CurrentSelectedItem.Table.GetChanges(DataRowState.Added);
                 if (modifiedTables != null)
                 {
-                    this.CurrentSelectedItem.Table.AcceptChanges();
                     this.ListViewSource = CollectionViewSource.GetDefaultView(this.CurrentSelectedItem.Table.Rows) as CollectionView;
                     this.ListViewSource.Refresh();
+                    this.ListViewSource.MoveCurrentToLast();
+                    this.CurrentSelectedItem = this.ListViewSource.Cast<DataRow>().Last();
+                    this.RowAction = RowNextAction.AddRow;
                 }
             }
 
@@ -571,35 +580,45 @@ namespace DataTableListView
             int aktionId = this.CurrentSelectedItem.GetField<int>("AktionId");
             */
 
-            if (this.CurrentSelectedItem != null)
+            if (this.RowAction == RowNextAction.AddRow)
             {
-                DataTable modifiedTables = this.CurrentSelectedItem.Table.GetChanges(DataRowState.Modified);
-                if (modifiedTables != null)
+                if (this.CurrentSelectedItem != null)
                 {
-                    string msgText = $"Sollen die anstehenden Änderungen ({modifiedTables.Rows.Count}) gespeichert werden?";
-                    MessageBoxResult msgYN = MessageBox.Show(msgText, "Änderungen speichern", MessageBoxButton.YesNo, MessageBoxImage.Question);
-                    if (msgYN == MessageBoxResult.Yes)
+                    DataTable modifiedTables = this.CurrentSelectedItem.Table.GetChanges(DataRowState.Added);
+                    if (modifiedTables != null)
                     {
                         using (DemoDataRepository repository = new DemoDataRepository())
                         {
-                            foreach (DataRow item in modifiedTables.Rows)
-                            {
-                                repository.Update(item);
-                            }
+                            repository.Add(this.CurrentSelectedItem);
                         }
-
-                        this.LoadDataHandler(true);
                     }
+
+                    this.LoadDataHandler(true);
                 }
             }
-            else
+            else if (this.RowAction == RowNextAction.UpdateRow)
             {
-                using (DemoDataRepository repository = new DemoDataRepository())
+                if (this.CurrentSelectedItem != null)
                 {
-                    //repository.Update(item);
-                }
+                    DataTable modifiedTables = this.CurrentSelectedItem.Table.GetChanges(DataRowState.Modified);
+                    if (modifiedTables != null)
+                    {
+                        string msgText = $"Sollen die anstehenden Änderungen ({modifiedTables.Rows.Count}) gespeichert werden?";
+                        MessageBoxResult msgYN = MessageBox.Show(msgText, "Änderungen speichern", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                        if (msgYN == MessageBoxResult.Yes)
+                        {
+                            using (DemoDataRepository repository = new DemoDataRepository())
+                            {
+                                foreach (DataRow item in modifiedTables.Rows)
+                                {
+                                    repository.Update(item);
+                                }
+                            }
 
-                this.LoadDataHandler(true);
+                            this.LoadDataHandler(true);
+                        }
+                    }
+                }
             }
         }
 
